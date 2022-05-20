@@ -1,0 +1,3 @@
+[submodule "haskell-src-exts"]
+	path = haskell-src-exts
+	url = https://github.com/kirderf1/haskell-src-exts
