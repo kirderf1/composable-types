@@ -21,10 +21,11 @@ author:             Fredrik Albers, Anna Romeborn
 -- category:
 -- extra-source-files: CHANGELOG.md
 
-executable program
-    main-is:          Testparse.hs
-    other-modules:    Transform,
-                      FunctionTransform,
+library
+    exposed-modules:  Transform
+
+    -- Modules included in this library but not exported.
+    other-modules:    FunctionTransform,
                       PieceTransform,
                       TransformUtils,
                       GeneratedNames,
@@ -33,10 +34,22 @@ executable program
                       Utils.Exps,
                       Utils.Contexts,
                       Utils.Names
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
     build-depends:    array >= 0.1, pretty >= 1.0,
                       base >= 4.5 && < 5,
                       haskell-src-exts,
                       containers,
+                      mtl
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+executable program
+    main-is:          Testparse.hs
+    build-depends:    base >= 4.5 && < 5,
+                      ct-transpiler,
+                      haskell-src-exts,
                       mtl
     hs-source-dirs:   app
     default-language: Haskell2010
