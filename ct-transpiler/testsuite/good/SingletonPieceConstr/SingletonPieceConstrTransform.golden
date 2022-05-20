@@ -1,0 +1,18 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module SingletonPieceConstr where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data B composable_types_recursive_var = B
+
+composable_types_constructor_B :: ComposableTypes.PartOf B g => g
+composable_types_constructor_B = ComposableTypes.inject' B
+
+c :: Data.Comp.Term (B)
+c = composable_types_constructor_B

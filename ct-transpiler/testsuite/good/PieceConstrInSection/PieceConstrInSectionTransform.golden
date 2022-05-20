@@ -1,0 +1,23 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module PieceConstrInSection where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data B composable_types_recursive_var = B Bool Bool
+
+composable_types_constructor_B ::
+                                 ComposableTypes.PartOf B g => Bool -> Bool -> g
+composable_types_constructor_B arg_1 arg_2
+  = ComposableTypes.inject' (B arg_1 arg_2)
+
+c :: Data.Comp.Term (B)
+c = (`composable_types_constructor_B` True) False
+
+d :: Data.Comp.Term (B)
+d = (True `composable_types_constructor_B`) False

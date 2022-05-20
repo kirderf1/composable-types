@@ -1,0 +1,33 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module MaybeE where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data B composable_types_recursive_var = B Int
+
+composable_types_constructor_B ::
+                                 ComposableTypes.PartOf B g => Int -> g
+composable_types_constructor_B arg_1
+  = ComposableTypes.inject' (B arg_1)
+
+data C composable_types_recursive_var = C
+
+composable_types_constructor_C :: ComposableTypes.PartOf C g => g
+composable_types_constructor_C = ComposableTypes.inject' C
+
+data D composable_types_recursive_var = D composable_types_recursive_var
+
+composable_types_constructor_D ::
+                                 ComposableTypes.PartOf D g => g -> g
+composable_types_constructor_D arg_1
+  = ComposableTypes.inject' (D arg_1)
+
+e ::
+  Int -> Maybe (Data.Comp.Term (B Data.Comp.:+: C Data.Comp.:+: D))
+e = undefined

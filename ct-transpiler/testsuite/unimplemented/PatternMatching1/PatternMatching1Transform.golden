@@ -1,0 +1,28 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module PatternMatching1 where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data B composable_types_recursive_var = B Int
+
+composable_types_constructor_B ::
+                                 ComposableTypes.PartOf B g => Int -> g
+composable_types_constructor_B arg_1 = ComposableTypes.inject' (B arg_1)
+
+data C composable_types_recursive_var = C
+
+composable_types_constructor_C :: ComposableTypes.PartOf C g => g
+composable_types_constructor_C = ComposableTypes.inject' C
+
+d :: Data.Comp.Term (B) -> Int
+d (Term (B i)) = i
+
+e :: Data.Comp.Term (B Data.Comp.:+: C) -> Int
+e (Term (Inl (B i))) = i
+e (Term (Inr C)) = 0

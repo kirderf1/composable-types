@@ -1,0 +1,34 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module PieceOpInfixRecord where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data Op composable_types_recursive_var = composable_types_recursive_var
+                                           `Add` composable_types_recursive_var
+                                       | composable_types_recursive_var `Mult`
+                                           composable_types_recursive_var
+
+composable_types_constructor_Add ::
+                                   ComposableTypes.PartOf Op g => g -> g -> g
+composable_types_constructor_Add arg_1 arg_2
+  = ComposableTypes.inject' (Add arg_1 arg_2)
+
+composable_types_constructor_Mult ::
+                                    ComposableTypes.PartOf Op g => g -> g -> g
+composable_types_constructor_Mult arg_1 arg_2
+  = ComposableTypes.inject' (Mult arg_1 arg_2)
+
+data A composable_types_recursive_var = B{c ::
+                                          composable_types_recursive_var,
+                                          d :: Int}
+
+composable_types_constructor_B ::
+                                 ComposableTypes.PartOf A g => g -> Int -> g
+composable_types_constructor_B arg_1 arg_2
+  = ComposableTypes.inject' (B arg_1 arg_2)

@@ -1,0 +1,122 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module TransforativeTwoCategories2 where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data Value composable_types_recursive_var = Const Int
+
+composable_types_constructor_Const ::
+                                     ComposableTypes.PartOf Value g => Int -> g
+composable_types_constructor_Const arg_1
+  = ComposableTypes.inject' (Const arg_1)
+
+data Op composable_types_recursive_var = Add composable_types_recursive_var
+                                             composable_types_recursive_var
+                                       | Mult composable_types_recursive_var
+                                              composable_types_recursive_var
+
+composable_types_constructor_Add ::
+                                   ComposableTypes.PartOf Op g => g -> g -> g
+composable_types_constructor_Add arg_1 arg_2
+  = ComposableTypes.inject' (Add arg_1 arg_2)
+
+composable_types_constructor_Mult ::
+                                    ComposableTypes.PartOf Op g => g -> g -> g
+composable_types_constructor_Mult arg_1 arg_2
+  = ComposableTypes.inject' (Mult arg_1 arg_2)
+
+data PairOp composable_types_recursive_var = Fst composable_types_recursive_var
+                                                 composable_types_recursive_var
+                                           | Snd composable_types_recursive_var
+                                                 composable_types_recursive_var
+                                           | Double composable_types_recursive_var
+
+composable_types_constructor_Fst ::
+                                   ComposableTypes.PartOf PairOp g => g -> g -> g
+composable_types_constructor_Fst arg_1 arg_2
+  = ComposableTypes.inject' (Fst arg_1 arg_2)
+
+composable_types_constructor_Snd ::
+                                   ComposableTypes.PartOf PairOp g => g -> g -> g
+composable_types_constructor_Snd arg_1 arg_2
+  = ComposableTypes.inject' (Snd arg_1 arg_2)
+
+composable_types_constructor_Double ::
+                                      ComposableTypes.PartOf PairOp g => g -> g
+composable_types_constructor_Double arg_1
+  = ComposableTypes.inject' (Double arg_1)
+
+type Sig =
+     Data.Comp.Term (Value Data.Comp.:+: Op Data.Comp.:+: PairOp)
+
+data T composable_types_recursive_var = T String
+
+composable_types_constructor_T ::
+                                 ComposableTypes.PartOf T g => String -> g
+composable_types_constructor_T arg_1
+  = ComposableTypes.inject' (T arg_1)
+
+data T2 composable_types_recursive_var = T2 composable_types_recursive_var
+                                            String composable_types_recursive_var
+
+composable_types_constructor_T2 ::
+                                  ComposableTypes.PartOf T2 g => g -> String -> g -> g
+composable_types_constructor_T2 arg_1 arg_2 arg_3
+  = ComposableTypes.inject' (T2 arg_1 arg_2 arg_3)
+
+data T3 composable_types_recursive_var = T3 composable_types_recursive_var
+
+composable_types_constructor_T3 ::
+                                  ComposableTypes.PartOf T3 g => g -> g
+composable_types_constructor_T3 arg_1
+  = ComposableTypes.inject' (T3 arg_1)
+
+class () => Composable_types_inner_class_transform f a where
+        composable_types_class_function_transform ::
+                                                    (Composable_types_inner_class_transform g a) =>
+                                                    f (Data.Comp.Term g) -> a
+
+$(
+  Data.Comp.Derive.derive [Data.Comp.Derive.liftSum]
+    [''Composable_types_inner_class_transform]
+  )
+
+class Composable_types_outer_class_transform t a where
+        transform :: t -> a
+
+instance Composable_types_inner_class_transform g a =>
+         Composable_types_outer_class_transform (Data.Comp.Term g) a
+         where
+        transform
+          = composable_types_class_function_transform . Data.Comp.unTerm
+
+instance (ComposableTypes.PartOf T a) =>
+         Composable_types_inner_class_transform Value a
+         where
+        composable_types_class_function_transform (Const c)
+          = composable_types_constructor_T $ show c
+
+instance (ComposableTypes.PartOf T2 a) =>
+         Composable_types_inner_class_transform Op a
+         where
+        composable_types_class_function_transform (Add e1 e2)
+          = composable_types_constructor_T2 (transform e1) "+" (transform e2)
+        composable_types_class_function_transform (Mult e1 e2)
+          = composable_types_constructor_T2 (transform e1) "*" (transform e2)
+
+instance (ComposableTypes.PartOf T3 a,
+          ComposableTypes.PartOf T2 a) =>
+         Composable_types_inner_class_transform PairOp a
+         where
+        composable_types_class_function_transform (Fst e1 e2)
+          = composable_types_constructor_T3 (transform e1)
+        composable_types_class_function_transform (Snd e1 e2)
+          = composable_types_constructor_T3 (transform e2)
+        composable_types_class_function_transform (Double e)
+          = composable_types_constructor_T2 (transform e) "+" (transform e)

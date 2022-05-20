@@ -1,0 +1,21 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module CreateRecordByApp where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data Const composable_types_recursive_var = Const{name :: String,
+                                                  value :: Int, good :: Bool}
+
+composable_types_constructor_Const ::
+                                     ComposableTypes.PartOf Const g => String -> Int -> Bool -> g
+composable_types_constructor_Const arg_1 arg_2 arg_3
+  = ComposableTypes.inject' (Const arg_1 arg_2 arg_3)
+
+newConst :: Data.Comp.Term (Const)
+newConst = composable_types_constructor_Const "x" 2 True

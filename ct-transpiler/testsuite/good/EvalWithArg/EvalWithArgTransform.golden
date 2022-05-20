@@ -1,0 +1,46 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module EvalWithArg where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data B composable_types_recursive_var = C Int
+                                      | D composable_types_recursive_var
+
+composable_types_constructor_C ::
+                                 ComposableTypes.PartOf B g => Int -> g
+composable_types_constructor_C arg_1
+  = ComposableTypes.inject' (C arg_1)
+
+composable_types_constructor_D ::
+                                 ComposableTypes.PartOf B g => g -> g
+composable_types_constructor_D arg_1
+  = ComposableTypes.inject' (D arg_1)
+
+class Composable_types_inner_class_eval f where
+        composable_types_class_function_eval ::
+                                               (Composable_types_inner_class_eval g) =>
+                                               f (Data.Comp.Term g) -> Bool -> Int
+
+$(
+  Data.Comp.Derive.derive [Data.Comp.Derive.liftSum]
+    [''Composable_types_inner_class_eval]
+  )
+
+class Composable_types_outer_class_eval t where
+        eval :: t -> Bool -> Int
+
+instance Composable_types_inner_class_eval g =>
+         Composable_types_outer_class_eval (Data.Comp.Term g)
+         where
+        eval = composable_types_class_function_eval . Data.Comp.unTerm
+
+instance Composable_types_inner_class_eval B where
+        composable_types_class_function_eval (D a) True = -eval a False
+        composable_types_class_function_eval (D a) False = eval a True
+        composable_types_class_function_eval (C i) _ = i

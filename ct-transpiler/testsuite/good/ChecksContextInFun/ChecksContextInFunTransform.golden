@@ -1,0 +1,39 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module ChecksContextInFun where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data B composable_types_recursive_var = B
+
+composable_types_constructor_B :: ComposableTypes.PartOf B g => g
+composable_types_constructor_B = ComposableTypes.inject' B
+
+class Composable_types_inner_class_c f where
+        composable_types_class_function_c ::
+                                            (Composable_types_inner_class_c g) =>
+                                            f (Data.Comp.Term g) -> ()
+
+$(
+  Data.Comp.Derive.derive [Data.Comp.Derive.liftSum]
+    [''Composable_types_inner_class_c]
+  )
+
+class Composable_types_outer_class_c t where
+        c :: t -> ()
+
+instance Composable_types_inner_class_c g =>
+         Composable_types_outer_class_c (Data.Comp.Term g)
+         where
+        c = composable_types_class_function_c . Data.Comp.unTerm
+
+d ::
+    (ComposableTypes.PartOf B a, Composable_types_outer_class_c a,
+     Show e) =>
+    a -> e -> ((), a)
+d a _ = (c a, composable_types_constructor_B)

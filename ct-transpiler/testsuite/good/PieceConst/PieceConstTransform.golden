@@ -1,0 +1,17 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module PieceConst where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data Value composable_types_recursive_var = Const Int
+
+composable_types_constructor_Const ::
+                                     ComposableTypes.PartOf Value g => Int -> g
+composable_types_constructor_Const arg_1
+  = ComposableTypes.inject' (Const arg_1)

@@ -1,0 +1,61 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module Eval where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data Value composable_types_recursive_var = Const Int
+
+composable_types_constructor_Const ::
+                                     ComposableTypes.PartOf Value g => Int -> g
+composable_types_constructor_Const arg_1
+  = ComposableTypes.inject' (Const arg_1)
+
+data Op composable_types_recursive_var = Add composable_types_recursive_var
+                                             composable_types_recursive_var
+                                       | Mult composable_types_recursive_var
+                                              composable_types_recursive_var
+
+composable_types_constructor_Add ::
+                                   ComposableTypes.PartOf Op g => g -> g -> g
+composable_types_constructor_Add arg_1 arg_2
+  = ComposableTypes.inject' (Add arg_1 arg_2)
+
+composable_types_constructor_Mult ::
+                                    ComposableTypes.PartOf Op g => g -> g -> g
+composable_types_constructor_Mult arg_1 arg_2
+  = ComposableTypes.inject' (Mult arg_1 arg_2)
+
+type Sig = Data.Comp.Term (Value Data.Comp.:+: Op)
+
+class Composable_types_inner_class_eval f where
+        composable_types_class_function_eval ::
+                                               (Composable_types_inner_class_eval g) =>
+                                               f (Data.Comp.Term g) -> Int
+
+$(
+  Data.Comp.Derive.derive [Data.Comp.Derive.liftSum]
+    [''Composable_types_inner_class_eval]
+  )
+
+class Composable_types_outer_class_eval t where
+        eval :: t -> Int
+
+instance Composable_types_inner_class_eval g =>
+         Composable_types_outer_class_eval (Data.Comp.Term g)
+         where
+        eval = composable_types_class_function_eval . Data.Comp.unTerm
+
+instance Composable_types_inner_class_eval Value where
+        composable_types_class_function_eval (Const i) = i
+
+instance Composable_types_inner_class_eval Op where
+        composable_types_class_function_eval (Add e1 e2)
+          = eval e1 + eval e2
+        composable_types_class_function_eval (Mult e1 e2)
+          = eval e1 * eval e2

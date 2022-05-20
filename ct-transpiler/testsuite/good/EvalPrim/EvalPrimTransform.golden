@@ -1,0 +1,31 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module EvalPrim where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+class Composable_types_inner_class_eval f where
+        composable_types_class_function_eval ::
+                                               (Composable_types_inner_class_eval g) =>
+                                               f (Data.Comp.Term g) -> Bool -> String
+
+$(
+  Data.Comp.Derive.derive [Data.Comp.Derive.liftSum]
+    [''Composable_types_inner_class_eval]
+  )
+
+class Composable_types_outer_class_eval t where
+        eval :: t -> Bool -> String
+
+instance Composable_types_inner_class_eval g =>
+         Composable_types_outer_class_eval (Data.Comp.Term g)
+         where
+        eval = composable_types_class_function_eval . Data.Comp.unTerm
+
+eval2 :: (Composable_types_outer_class_eval a) => a -> String
+eval2 a = eval a False
