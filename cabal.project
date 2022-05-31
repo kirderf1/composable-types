@@ -1,2 +1,3 @@
 packages: haskell-src-exts/
+          haskell-names/
           ct-transpiler/
