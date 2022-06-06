@@ -19,8 +19,10 @@ type Sig = Map (QName ()) (Set (QName ()))
 -- | Set of all piece constructors
 type Constrs = Set (QName ())
 
+type Env = (Sig, Constrs)
+
 -- | Transform monad containing signature of categories and handles error messages as Strings.
-type Transform = ReaderT (Sig, Constrs) (Except String)
+type Transform = ReaderT Env (Except String)
 
 compdata :: ModuleName ()
 compdata = ModuleName () "Data.Comp"
