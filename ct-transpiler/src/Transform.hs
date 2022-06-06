@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Transform (transform) where
+module Transform (transform, transformTest) where
 
 import Language.Haskell.Exts
 
@@ -20,14 +20,26 @@ import qualified Data.Set as Set
 import Control.Monad.Reader
 import Control.Monad.Except
 
--- | Transform a module by building signature of categories and then transforming the content of the module
 transform :: Module () -> Except String (Module ())
-transform m@(Module _ _mhead _pragmas _imports decls) = do
+transform m = do
+    (mod, _) <- transform' m (Map.empty, Set.empty)
+    return mod
+
+transformTest :: Module () -> Except String (Module (), Env)
+transformTest m = transform' m (Map.empty, Set.empty)
+
+-- | Transform a module by building signature of categories and then transforming the content of the module
+transform' :: Module () -> Env -> Except String (Module (), Env)
+transform' m@(Module _ _mhead _pragmas _imports decls) (importSig, importConstrs) = do
     sigCat <- buildSigCat decls
     sig    <- buildSigPiece decls sigCat
     constrs <- buildConstrs decls
-    runReaderT (transformModule m) (sig, constrs) 
-transform _xml = throwError "transform not defined for xml formats" 
+    let sig' = Map.unionWith Set.union importSig sig
+        constrs' = Set.union importConstrs constrs
+        env = (sig', constrs')
+    mod <- runReaderT (transformModule m) env
+    return (mod, env)
+transform' _xml _ = throwError "transform not defined for xml formats" 
 -- ^ XmlPage and XmlHybrid formats not handled (yet)
 
 -- | Transform a module to remove syntax for composable types if the pragma is present
