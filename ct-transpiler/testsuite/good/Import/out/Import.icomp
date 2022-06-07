@@ -1,1 +1,1 @@
-(fromList [(UnQual () (Ident () "A"),fromList [])],fromList [])
+(fromList [(UnQual () (Ident () "A"),fromList [])],fromList [UnQual () (Ident () "C")])

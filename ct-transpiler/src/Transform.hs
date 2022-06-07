@@ -25,17 +25,14 @@ transform m = do
     (mod, _) <- transform' m (Map.empty, Set.empty)
     return mod
 
-transformTest :: Module () -> Except String (Module (), Env)
-transformTest m = transform' m (Map.empty, Set.empty)
-
 -- | Transform a module by building signature of categories and then transforming the content of the module
 transform' :: Module () -> Env -> Except String (Module (), Env)
 transform' m@(Module _ _mhead _pragmas _imports decls) (importSig, importConstrs) = do
     sigCat <- buildSigCat decls
-    sig    <- buildSigPiece decls sigCat
+    let sig' = Map.unionWith Set.union importSig sigCat
+    sig    <- buildSigPiece decls sig'
     constrs <- buildConstrs decls
-    let sig' = Map.unionWith Set.union importSig sig
-        constrs' = Set.union importConstrs constrs
+    let constrs' = Set.union importConstrs constrs
         env = (sig', constrs')
     mod <- runReaderT (transformModule m) env
     return (mod, env)
