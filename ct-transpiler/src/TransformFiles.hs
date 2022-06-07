@@ -1,4 +1,4 @@
-module TransformFiles (transpileFile) where
+module TransformFiles (transpileFiles) where
 
 import Language.Haskell.Exts
 
@@ -13,40 +13,54 @@ import qualified Data.Set as Set
 
 import Control.Monad.Except
 
-
+transpileFiles :: FilePath -> FilePath -> ExceptT String IO ()
+transpileFiles dir outdir = do
+    exists <- lift $ doesDirectoryExist dir
+    if exists
+      then do
+        contents <- lift $ getDirectoryContents dir
+        let files = filter (\f -> takeExtension f == ".hs") contents
+        mapM_ (transpileFile outdir) (map (dir </>) files )
+      else error "No such directory"
 
 transpileFile :: FilePath -> FilePath -> ExceptT String IO ()
-transpileFile file out = do
+transpileFile outdir file = do
     parseResult <- lift $ parseFile file
     case parseResult of
         f@ParseFailed{} -> error $ show f
-        ParseOk ast -> do
-            case runExcept (transformFile (void ast) file) of
-                Left msg ->  error msg
-                Right (ast', env) -> do 
-                    let result = prettyPrint ast'
-                    lift $ writeFileAndCreateDirectory (out <.> "hs") $ result ++ "\n"
-                    lift $ writeFileAndCreateDirectory (out <.> "icomp") $ show env 
-                    
-
-transformFile :: Module () -> FilePath -> Except String (Module (), Env)
-transformFile m@(Module _ _mhead _pragmas imports _decls) file = do
-    let infoFiles = readImports imports
-    transformTest m
-
-readImports :: [ImportDecl ()] -> Except String Env
-readImports = undefined
+        ParseOk m@(Module _ _mhead _pragmas imports _decls) -> do
+            case (runExceptT (readImports imports outdir)) of
+                 Left file' -> transpileFile outdir file'
+                 Right env -> do
+                     case runExcept (transform' (void m) env) of
+                        Left msg ->  error msg
+                        Right (ast', env) -> do 
+                            let result = prettyPrint ast'
+                            lift $ createDirectoryIfMissing True outdir
+                            lift $ writeFile (outdir </> takeFileName file) $ result ++ "\n"
+                            lift $ writeFile (outdir </> takeBaseName file <.> "icomp") $ show env 
+            
+    
     
 
-readImport :: ImportDecl () -> IO Env 
-readImport (ImportDecl {importModule = ModuleName _ nam}) = do
-    let infoFile = nam <.> ".icomp"
-    exists <- doesFileExist infoFile
+readImports :: [ImportDecl l] -> FilePath -> ExceptT String IO Env
+readImports idecls outdir = do
+    envs <- mapM (readImport outdir) idecls
+    let (sigs, constrs) = unzip envs
+        sig = foldr (Map.unionWith Set.union) Map.empty sigs
+        constrs' = foldr Set.union Set.empty constrs
+    return (sig, constrs')
+    
+
+readImport :: FilePath -> ImportDecl l -> ExceptT String IO Env 
+readImport outdir (ImportDecl {importModule = ModuleName _ nam}) = do
+    let infoFile = outdir </> nam <.> ".icomp"
+    exists <- lift $ doesFileExist infoFile
     if exists
-        then do
+        then lift $ do
                 content <- readFile infoFile
                 return $ read content
-            else return (Map.empty, Set.empty)
+        else error $ nam
 
 
 
@@ -75,8 +89,5 @@ writeFileAndCreateDirectory file text = do
 
 -- transform (module) should return the transformed module and (Sig, Constrs) 
 -- so that we can create info file and transformed file from that
-
--- do we want to have a specific file ending to our files to specifically transform those, 
--- or just be happy to transform everything else as id?
 
 
