@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Transform (transform, transformTest) where
+module Transform (transform, transform') where
 
 import Language.Haskell.Exts
 
