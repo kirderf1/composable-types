@@ -8,6 +8,7 @@ import TransformUtils
 import System.FilePath
 import System.Directory
 
+import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 
@@ -20,18 +21,28 @@ transpileFiles dir outdir = do
       then do
         contents <- lift $ getDirectoryContents dir
         let files = filter (\f -> takeExtension f == ".hs") contents
-        mapM_ (transpileFile outdir) (map (dir </>) files )
+        transpileFiles' outdir (map (dir </>) files )
       else error "No such directory"
+      
+    where
+        transpileFiles' :: FilePath -> [FilePath] -> ExceptT String IO ()
+        transpileFiles' _ [] = return ()
+        transpileFiles' outdir (file:toBeTrans) = do
+            transpileFile toBeTrans outdir file
+            transpileFiles' outdir toBeTrans 
+            
 
-transpileFile :: FilePath -> FilePath -> ExceptT String IO ()
-transpileFile outdir file = do
+transpileFile :: [FilePath] -> FilePath -> FilePath -> ExceptT String IO ()
+transpileFile toBeTrans outdir file = do
     parseResult <- lift $ parseFile file
     case parseResult of
         f@ParseFailed{} -> error $ show f
         ParseOk m@(Module _ _mhead _pragmas imports _decls) -> do
-            case (runExceptT (readImports imports outdir)) of
-                 Left file' -> transpileFile outdir file'
-                 Right env -> do
+            let importFiles = readImports imports
+            res <- lift $ runExceptT $ transpileImports toBeTrans outdir importFiles
+            case res of
+                 Left msg -> error msg
+                 Right (_, env) -> do
                      case runExcept (transform' (void m) env) of
                         Left msg ->  error msg
                         Right (ast', env) -> do 
@@ -43,51 +54,38 @@ transpileFile outdir file = do
     
     
 
-readImports :: [ImportDecl l] -> FilePath -> ExceptT String IO Env
-readImports idecls outdir = do
-    envs <- mapM (readImport outdir) idecls
-    let (sigs, constrs) = unzip envs
-        sig = foldr (Map.unionWith Set.union) Map.empty sigs
-        constrs' = foldr Set.union Set.empty constrs
-    return (sig, constrs')
-    
+readImports :: [ImportDecl l] -> [FilePath] 
+readImports idecls = map readImport idecls
+             
+readImport :: ImportDecl l -> FilePath
+readImport (ImportDecl {importModule = ModuleName _ nam}) = nam
 
-readImport :: FilePath -> ImportDecl l -> ExceptT String IO Env 
-readImport outdir (ImportDecl {importModule = ModuleName _ nam}) = do
-    let infoFile = outdir </> nam <.> ".icomp"
-    exists <- lift $ doesFileExist infoFile
-    if exists
+transpileImports :: [FilePath] -> FilePath -> [FilePath] -> ExceptT String IO ([FilePath], Env)
+transpileImports toBeTrans outdir [] = return (toBeTrans, (Map.empty, Set.empty))
+transpileImports toBeTrans outdir (file:files) = do
+    (toBeTrans', env) <- getEnvFromInfoFile toBeTrans outdir file
+    (toBeTrans'', env') <- transpileImports toBeTrans' outdir files
+    let 
+        sig = Map.unionWith Set.union (fst env) (fst env')
+        constrs = Set.union (snd env) (snd env')
+    return (toBeTrans'', (sig, constrs))
+
+        
+getEnvFromInfoFile :: [FilePath] -> FilePath -> FilePath -> ExceptT String IO ([FilePath], Env)
+getEnvFromInfoFile toBeTrans outdir nam = do
+    let infoFile = outdir </> nam <.> "icomp"
+    existsInfo <- lift $ doesFileExist infoFile
+    if existsInfo
         then lift $ do
                 content <- readFile infoFile
-                return $ read content
-        else error $ nam
-
-
-
-writeFileAndCreateDirectory :: FilePath -> String -> IO ()
-writeFileAndCreateDirectory file text = do
-    createDirectoryIfMissing True $ takeDirectory file
-    writeFile file text
-
-
-
-
-
-
-
--- parseFile
--- transform file:
--- if it imports:
-    -- transform file with use of info files from imports
-    -- if no info files (or no transformed files?), transform the imported file itself if it exists
--- when transforming, make sure to create info file
--- prettyprint result (return string, or always write to a file?)
--- probably take in another argument for where to put info file and transformed file
-
--- info file:
--- save environment as (Sig, Constrs) which contains categories, pieces and piece constructors
-
--- transform (module) should return the transformed module and (Sig, Constrs) 
--- so that we can create info file and transformed file from that
-
+                return $ (toBeTrans, read content)
+        else do
+            let modFile = nam <.> "hs"
+                existsModule = List.elem modFile (map takeFileName toBeTrans)
+            if existsModule
+               then do 
+                   transpileFile toBeTrans outdir modFile
+                   getEnvFromInfoFile (List.delete modFile toBeTrans) outdir nam
+               else error $ "could not find info file nor file to be transpiled"
+                 
 
