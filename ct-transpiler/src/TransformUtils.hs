@@ -7,7 +7,9 @@ import Language.Haskell.Exts
 import qualified GeneratedNames as Names
 
 import           Data.Map   (Map)
+import qualified Data.Map as Map
 import           Data.Set   (Set)
+import qualified Data.Set as Set
 import           Data.Maybe (catMaybes)
 
 import Control.Monad.Reader
@@ -20,6 +22,9 @@ type Sig = Map (QName ()) (Set (QName ()))
 type Constrs = Set (QName ())
 
 type Env = (Sig, Constrs)
+
+emptyEnv :: Env 
+emptyEnv = (Map.empty, Set.empty)
 
 -- | Transform monad containing signature of categories and handles error messages as Strings.
 type Transform = ReaderT Env (Except String)

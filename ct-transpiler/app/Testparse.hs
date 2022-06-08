@@ -12,7 +12,7 @@ main :: IO ()
 main = do
     files <- getArgs
     let (dir: outdir: []) = files
-    res <- runExceptT (transpileFiles dir outdir)
+    res <- runExceptT (transpileFilesFromDir dir outdir)
     case res of
          Left msg -> putStrLn msg
          Right _ -> return ()

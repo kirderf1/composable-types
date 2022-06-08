@@ -22,7 +22,7 @@ import Control.Monad.Except
 
 transform :: Module () -> Except String (Module ())
 transform m = do
-    (mod, _) <- transform' m (Map.empty, Set.empty)
+    (mod, _) <- transform' m emptyEnv
     return mod
 
 -- | Transform a module by building signature of categories and then transforming the content of the module
