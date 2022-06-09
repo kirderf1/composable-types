@@ -29,8 +29,8 @@ transform m = do
 transform' :: Module () -> Env -> Except String (Module (), Env)
 transform' m@(Module _ _mhead _pragmas _imports decls) (importSig, importConstrs) = do
     sigCat <- buildSigCat decls
-    let sig' = Map.unionWith Set.union importSig sigCat
-    sig    <- buildSigPiece decls sig'
+    let sig = Map.unionWith Set.union importSig sigCat
+    sig'    <- buildSigPiece decls sig
     constrs <- buildConstrs decls
     let constrs' = Set.union importConstrs constrs
         env = (sig', constrs')
