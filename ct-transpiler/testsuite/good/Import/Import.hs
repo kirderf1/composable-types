@@ -6,3 +6,5 @@ import A
 import R
 
 data piece A ==> B = C
+
+main = return ()
