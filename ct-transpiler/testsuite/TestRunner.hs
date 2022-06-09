@@ -2,6 +2,7 @@ module Main where
 
 import Language.Haskell.Exts
 import Transform
+import TransformFiles
 
 import Test.Tasty.Golden
 import Test.Tasty
@@ -36,13 +37,16 @@ clean group = (cleanTest `mapM_`) =<< testDirs
     cleanTest dir = do
         files <- (filter isOutFile) <$> getFiles dir
         mapM_ removeFile files
+        let outDir = dir </> "out"
+        existsOut <- doesDirectoryExist outDir
+        if existsOut
+           then removeDirectoryRecursive outDir
+           else return()
         isEmpty <- (0 ==) . length <$> listDirectory dir
         if isEmpty
           then removeDirectory dir
           else return ()
     isOutFile path = takeExtension path == ".out"
-        
-    
 
 type TestSuite = ([FilePath], [FilePath], [FilePath])
 
@@ -54,52 +58,54 @@ testsuite = "testsuite"
 
 groups :: [FilePath]
 groups = ["good", "bad"]
-  
-getTestFiles :: FilePath -> IO [FilePath]
-getTestFiles mainDir = do
+        
+getTestDirs :: FilePath -> IO [FilePath]
+getTestDirs mainDir = do
     exists <- doesDirectoryExist mainDir
     if exists
-      then do
-        dirs <- getDirectories mainDir
-        filterM doesFileExist $ map toTestFile dirs
+      then do 
+          dirs <- getDirectories mainDir
+          filterM hasMainFile $ dirs
       else return []
-  where toTestFile dir = dir </> takeBaseName dir <.> "hs"
+    where hasMainFile = doesFileExist . toTestFile
+          toTestFile dir = dir </> takeBaseName dir <.> "hs"
 
-createTransformTree :: FilePath -> IO (TestTree)
-createTransformTree group = testGolden group "Transform" runTransformTest <$> getTestFiles (testsuite </> group)
+createTransformTree :: FilePath -> IO TestTree
+createTransformTree group = testGolden group "Transform" runTransformTest <$> getTestDirs (testsuite </> group)
 
 createCompileTree :: FilePath -> IO (TestTree)
-createCompileTree group = testGolden group "Compile" runTransformAndCompileTest <$> getTestFiles (testsuite </> group)
+createCompileTree group = testGolden group "Compile" runTransformAndCompileTest <$> getTestDirs (testsuite </> group)
 
 testGolden :: String -> String -> (FilePath -> FilePath -> IO ()) -> [FilePath] -> TestTree
-testGolden group test run files = testGroup group $ do
-    file <- files
-    let golden = dropExtension file ++ test <.> "golden"
-        out = dropExtension file ++ test <.> "out"
-    return $ goldenVsFile (takeBaseName file) golden out (run file out)
-
+testGolden group test run dirs = testGroup group $ do
+    dir <- dirs
+    let golden = dir </> takeBaseName dir ++ test <.> "golden"
+        out = dir </> takeBaseName dir ++ test <.> "out"
+    return $ goldenVsFile (takeBaseName dir) golden out (run dir out)
+      
 runTransformTest :: FilePath -> FilePath -> IO ()
-runTransformTest file out = do
-    parseResult <- parseFile file
-    case parseResult of 
-        f@ParseFailed{} -> writeFileAndCreateDirectory out $ show f ++ "\n"
-        ParseOk ast -> do
-            case runExcept (transform $ void ast) of
-                Left msg ->  writeFileAndCreateDirectory out $ msg ++ "\n"
-                Right ast' -> do let result = prettyPrint ast'
-                                 writeFileAndCreateDirectory out $ result ++ "\n"
+runTransformTest dir out = do
+    let outdir = dir </> "out"
+    res <- runExceptT (transpileFilesFromDir dir outdir)
+    case res of
+        Left msg ->  writeFileAndCreateDirectory out $ msg ++ "\n"
+        Right _ -> do 
+            let file = outdir </> takeBaseName dir <.> "hs"
+            createDirectoryIfMissing True $ takeDirectory out
+            copyFile file out            
 
 runTransformAndCompileTest :: FilePath -> FilePath -> IO ()
-runTransformAndCompileTest file out = do
-    let dir = takeDirectory file </> "build"
-    let transformOutput = dir </> "output" <.> "hs"
-    runTransformTest file transformOutput
-    runCompileTest dir transformOutput out
-    removeDirectoryRecursive dir
+runTransformAndCompileTest dir out = do
+    let outdir = dir </> "out"
+        buildDir = dir </> "build"
+        transformOutput = buildDir </> takeBaseName dir <.> "hs"
+        transformOutputMain = outdir </> takeBaseName dir <.> "hs"
+    runTransformTest dir transformOutput
+    runCompileTest buildDir transformOutputMain out
+    removeDirectoryRecursive buildDir
                                  
 runCompileTest :: FilePath -> FilePath -> FilePath -> IO ()
 runCompileTest dir file outFile = do
-    -- let runFile = dropExtension file
     createDirectoryIfMissing True dir
     (exit,_out,err) <- readProcessWithExitCode "ghc" ["-i" ++ lib, "-outputdir", dir, file] []
     case exit of
