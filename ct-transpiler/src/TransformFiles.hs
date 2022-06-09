@@ -19,7 +19,7 @@ import Data.Functor.Identity
 transpileFilesFromDir :: FilePath -> FilePath -> ExceptT String IO ()
 transpileFilesFromDir dir outdir = 
     if dir == outdir
-       then error "Output directory cannot be the same as the directory with files to be transpiled"
+       then throwError "Output directory cannot be the same as the directory with files to be transpiled"
        else do
         exists <- lift $ doesDirectoryExist dir
         if exists
@@ -27,7 +27,7 @@ transpileFilesFromDir dir outdir =
             contents <- lift $ getDirectoryContents dir
             let files = filter (\f -> takeExtension f == ".hs") contents
             transpileFiles outdir (map (dir </>) files )
-        else error "No such directory"
+        else throwError "No such directory"
 
 -- | Transpile a list of files and put the transpiled files in a given output directory
 transpileFiles :: FilePath -> [FilePath] -> ExceptT String IO ()
@@ -41,7 +41,7 @@ transpileFile :: FilePath -> [FilePath] -> FilePath -> ExceptT String IO [FilePa
 transpileFile outdir toBeTrans file = do
     parseResult <- lift $ parseFile file
     case parseResult of
-        f@ParseFailed{} -> error $ show f
+        f@ParseFailed{} -> throwError $ show f
         ParseOk m@(Module _ _mhead _pragmas imports _decls) -> do
             let importFiles = map (readImport (takeDirectory file)) imports
             (toBeTrans', env) <- checkImports outdir toBeTrans importFiles
