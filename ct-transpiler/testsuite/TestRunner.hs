@@ -105,9 +105,10 @@ runTransformAndCompileTest dir out = do
     removeDirectoryRecursive buildDir
                                  
 runCompileTest :: FilePath -> FilePath -> FilePath -> IO ()
-runCompileTest dir file outFile = do
-    createDirectoryIfMissing True dir
-    (exit,_out,err) <- readProcessWithExitCode "ghc" ["-i" ++ lib, "-outputdir", dir, file] []
+runCompileTest buildDir file outFile = do
+    createDirectoryIfMissing True buildDir
+    let dir = takeDirectory file
+    (exit,_out,err) <- readProcessWithExitCode "ghc" ["-i" ++ lib, "-i" ++ dir, "-outputdir", buildDir, file] []
     case exit of
          ExitSuccess -> writeFileAndCreateDirectory outFile $  "OK \n"
          ExitFailure _ ->  writeFileAndCreateDirectory outFile err
