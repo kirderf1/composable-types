@@ -4,15 +4,10 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Main where
+module ImportPieceDeclToComposition where
 import qualified Data.Comp
 import qualified Data.Comp.Derive
 import qualified ComposableTypes
-import A
-import R
+import Pieces
 
-data B composable_types_recursive_var = C
-
-composable_types_constructor_C :: ComposableTypes.PartOf B g => g
-composable_types_constructor_C = ComposableTypes.inject' C
-main = return ()
+type B = Data.Comp.Term (Aa Data.Comp.:+: Ab)
