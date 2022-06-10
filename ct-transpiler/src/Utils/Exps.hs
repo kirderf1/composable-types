@@ -52,7 +52,7 @@ instance ExpMap Decl where
             MinimalPragma    l b             -> return $ MinimalPragma l b
             RoleAnnotDecl    l t rs          -> return $ RoleAnnotDecl l t rs
             CompletePragma   l cs ty         -> return $ CompletePragma l cs ty
-            PieceDecl   l ca dh cds ders     -> PieceDecl l ca dh <$> (mapExp f `mapM` cds) <*> (mapExp f `mapM` ders)
+            PieceDecl   l ca dh cds          -> PieceDecl l ca dh <$> (mapExp f `mapM` cds)
             PieceCatDecl l ca                -> return $ PieceCatDecl l ca
             CompFunDecl  l ns mcx ca t       -> CompFunDecl l ns <$> (mapExp f `mapM` mcx) <*> return ca <*> mapExp f t
             CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapExp f `mapM` mcx) <*> return fn <*> mapExp f `mapM` ts <*> return pn <*> ((mapExp f `mapM`) `mapM` ids)

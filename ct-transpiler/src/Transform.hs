@@ -129,7 +129,7 @@ buildSigCat (_:decls) = buildSigCat decls
 -- | Build signature, add pieces to map of categories
 buildSigPiece :: [Decl ()] -> Sig -> Except String Sig
 buildSigPiece [] sig = return sig
-buildSigPiece  ((PieceDecl _ category headName _cons _derives):decls) sig = do
+buildSigPiece  ((PieceDecl _ category headName _cons):decls) sig = do
     sig' <- buildSigPiece decls sig
     case Map.lookup category sig' of
         Just oldCons -> return $ Map.insert category (Set.insert (UnQual () headName) oldCons) sig'
@@ -139,7 +139,7 @@ buildSigPiece (_:decls) sig = buildSigPiece decls sig
 -- | Build set of all piece constructors
 buildConstrs :: [Decl ()] -> Except String Constrs
 buildConstrs [] = return Set.empty
-buildConstrs ((PieceDecl _ _category _headName cons _derives):decls) = do
+buildConstrs ((PieceDecl _ _category _headName cons):decls) = do
     constrs <- buildConstrs decls
     return $ foldr Set.insert constrs (qualConName <$> cons)
     where qualConName (QualConDecl _ _mForAll _mContext conDecl) = UnQual () (conName conDecl)

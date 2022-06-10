@@ -55,7 +55,7 @@ mapDecl' f decl = f =<< case decl of
         MinimalPragma    l b             -> return $ MinimalPragma l b
         RoleAnnotDecl    l t rs          -> return $ RoleAnnotDecl l t rs
         CompletePragma   l cs ty         -> return $ CompletePragma l cs ty
-        PieceDecl   l ca dh cds ders     -> PieceDecl l ca dh <$> (mapDecl f `mapM` cds) <*> (mapDecl f `mapM` ders)
+        PieceDecl   l ca dh cds          -> PieceDecl l ca dh <$> (mapDecl f `mapM` cds)
         PieceCatDecl l ca                -> return $ PieceCatDecl l ca
         CompFunDecl  l ns mcx ca t       -> CompFunDecl l ns <$> (mapDecl f `mapM` mcx) <*> return ca <*> mapDecl f t
         CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapDecl f `mapM` mcx) <*> return fn <*> mapDecl f `mapM` ts <*> return pn <*> ((mapDecl f `mapM`) `mapM` ids)

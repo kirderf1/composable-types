@@ -54,7 +54,7 @@ instance TypeMap Decl where
             MinimalPragma    l b             -> return $ MinimalPragma l b
             RoleAnnotDecl    l t rs          -> return $ RoleAnnotDecl l t rs
             CompletePragma   l cs ty         -> return $ CompletePragma l cs ty
-            PieceDecl   l ca dh cds ders     -> PieceDecl l ca dh <$> (mapType f `mapM` cds) <*> (mapType f `mapM` ders)
+            PieceDecl   l ca dh cds          -> PieceDecl l ca dh <$> (mapType f `mapM` cds)
             PieceCatDecl l ca                -> return $ PieceCatDecl l ca
             CompFunDecl  l ns mcx ca t       -> CompFunDecl l ns <$> (mapType f `mapM` mcx) <*> return ca <*> mapType f t
             CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapType f `mapM` mcx) <*> return fn <*> mapType f `mapM` ts <*> return pn <*> ((mapType f `mapM`) `mapM` ids)

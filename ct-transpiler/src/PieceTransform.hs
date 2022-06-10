@@ -15,7 +15,7 @@ import Control.Monad.Except
 
 -- | Transform a top level declaration to one or more new declarations
 transformPieceDecl :: Decl () -> Transform [Decl ()]
-transformPieceDecl (PieceDecl _ category pieceName cons derives) = 
+transformPieceDecl (PieceDecl _ category pieceName cons) = 
     let cspar = map (parametConstructor Names.recursiveVar category) cons
         in do
     smartCons <- concat <$> mapM (smartCon category pieceName) cons
@@ -25,7 +25,7 @@ transformPieceDecl (PieceDecl _ category pieceName cons derives) =
         Nothing 
         (DHApp () (DHead () pieceName) (UnkindedVar () Names.recursiveVar))
         cspar
-        derives
+        []
         : smartCons)
 transformPieceDecl (PieceCatDecl _ _) = return []
 transformPieceDecl d = return [d]
