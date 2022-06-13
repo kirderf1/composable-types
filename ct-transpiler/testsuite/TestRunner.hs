@@ -12,7 +12,7 @@ import System.Directory
 import System.Process     (readProcessWithExitCode)
 import System.Exit
 
-
+-- | Perform transform and compile tests on provided testsuite files using Tasty. 
 main :: IO ()
 main = do
     clean `mapM_` groups
@@ -20,9 +20,10 @@ main = do
     compileTests <- createCompileTree `mapM` ["good"]
     defaultMain $ testGroup "Tests" 
         [(testGroup "Transform tests") transformTests, 
-         (testGroup "Compile tests") compileTests]          
+         (testGroup "Compile tests") compileTests]
 
-
+-- | Clean directory of tests by removing generated "out" directory and ".out files"
+-- If a test directory is empty after that, remove the directory as well.
 clean :: FilePath -> IO ()
 clean group = (cleanTest `mapM_`) =<< testDirs
   where
@@ -48,8 +49,6 @@ clean group = (cleanTest `mapM_`) =<< testDirs
           else return ()
     isOutFile path = takeExtension path == ".out"
 
-type TestSuite = ([FilePath], [FilePath], [FilePath])
-
 lib :: FilePath
 lib = "lib"
 
@@ -58,7 +57,8 @@ testsuite = "testsuite"
 
 groups :: [FilePath]
 groups = ["good", "bad"]
-        
+
+-- | Get a list of all test directories that contain a Haskell file with the same name as the directory
 getTestDirs :: FilePath -> IO [FilePath]
 getTestDirs mainDir = do
     exists <- doesDirectoryExist mainDir
@@ -76,13 +76,16 @@ createTransformTree group = testGolden group "Transform" runTransformTest <$> ge
 createCompileTree :: FilePath -> IO (TestTree)
 createCompileTree group = testGolden group "Compile" runTransformAndCompileTest <$> getTestDirs (testsuite </> group)
 
+-- | Perform a given test on a group of test files and compare result with golden file
 testGolden :: String -> String -> (FilePath -> FilePath -> IO ()) -> [FilePath] -> TestTree
 testGolden group test run dirs = testGroup group $ do
     dir <- dirs
     let golden = dir </> takeBaseName dir ++ test <.> "golden"
         out = dir </> takeBaseName dir ++ test <.> "out"
     return $ goldenVsFile (takeBaseName dir) golden out (run dir out)
-      
+
+-- | Performs transformation on all files in a directory, and write the result to a given output file
+-- The result is either an error or the output for the main test file
 runTransformTest :: FilePath -> FilePath -> IO ()
 runTransformTest dir out = do
     let outdir = dir </> "out"
@@ -103,7 +106,8 @@ runTransformAndCompileTest dir out = do
     runTransformTest dir transformOutput
     runCompileTest buildDir transformOutputMain out
     removeDirectoryRecursive buildDir
-                                 
+                  
+-- | Compile the main test file in a directory and write either error or "OK" to a given output file
 runCompileTest :: FilePath -> FilePath -> FilePath -> IO ()
 runCompileTest buildDir file outFile = do
     createDirectoryIfMissing True buildDir
