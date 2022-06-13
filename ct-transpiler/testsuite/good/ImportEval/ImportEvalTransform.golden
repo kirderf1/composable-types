@@ -1,0 +1,45 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module ImportEval where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+import A
+import B
+
+data Op composable_types_recursive_var = Add composable_types_recursive_var
+                                             composable_types_recursive_var
+                                       | Mult composable_types_recursive_var
+                                              composable_types_recursive_var
+
+composable_types_constructor_Add ::
+                                   ComposableTypes.PartOf Op g => g -> g -> g
+composable_types_constructor_Add arg_1 arg_2
+  = ComposableTypes.inject' (Add arg_1 arg_2)
+
+composable_types_constructor_Mult ::
+                                    ComposableTypes.PartOf Op g => g -> g -> g
+composable_types_constructor_Mult arg_1 arg_2
+  = ComposableTypes.inject' (Mult arg_1 arg_2)
+
+type Sig = Data.Comp.Term (Value Data.Comp.:+: Op)
+
+instance Composable_types_inner_class_eval Op where
+        composable_types_class_function_eval (Add e1 e2)
+          = eval e1 + eval e2
+        composable_types_class_function_eval (Mult e1 e2)
+          = eval e1 * eval e2
+
+evalEx :: Int
+evalEx
+  = eval
+      (composable_types_constructor_Const 1
+         `composable_types_constructor_Add`
+         (composable_types_constructor_Const 2
+            `composable_types_constructor_Mult`
+            composable_types_constructor_Const 2)
+         :: Sig)
