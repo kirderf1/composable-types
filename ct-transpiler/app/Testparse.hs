@@ -8,6 +8,10 @@ import System.FilePath
 
 import TransformFiles
 
+-- | Parse arguments from command line and perform a transformation on the file(s) provided,
+-- writing the result to standard output.
+-- If there is a single input file, a debug flag can be provided to also print intermediate
+-- states of parse and transformation.
 main :: IO ()
 main = do
   args <- parseArgs <$> getArgs
@@ -39,6 +43,7 @@ main = do
 showModule :: Module l -> IO ()
 showModule = print . void
 
+-- | Run transformation on files given in a directory, writing the output to a specified directory.
 runDir :: Args -> IO ()
 runDir args = do
     let inDir = inputDir args
@@ -58,6 +63,10 @@ data Args = Args
   , debugPrint :: Bool
   }
 
+-- | Parse arguments from a list of strings.
+-- Provide either path to a Haskell file to be transformed, or paths to two directories.
+-- The first one is the directory of files to be transformed, the second the where to put the resulting files.
+-- --debug can be provided for single file input to print intermediate states. Write -- --debug in command line.
 parseArgs :: [String] -> Args
 parseArgs ("--debug" : rest) = case parseArgs rest of
          arg | not (debugPrint arg) -> arg{debugPrint = True}
