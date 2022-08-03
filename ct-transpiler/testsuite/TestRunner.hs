@@ -12,16 +12,16 @@ import System.Directory
 import System.Process     (readProcessWithExitCode)
 import System.Exit
 
+type TestGroup = (FilePath, [FilePath])
+
 -- | Perform transform and compile tests on provided testsuite files using Tasty. 
 main :: IO ()
 main = do
-    clean `mapM_` groups
-    transformTests <- createTransformTree `mapM` groups
-    compileTests <- createCompileTree "good"
+    clean `mapM_` validGroups
+    transformTests <- lookupTestGroup `mapM` validGroups
+    compileTests <- lookupTestGroup `mapM` ["good"]
     defaultMainWithIngredients ingredients $ askOption $ \(Compiler ghc) ->
-        testGroup "Tests" 
-            [(testGroup "Transform tests") transformTests, 
-             (testGroup "Compile tests") [compileTests ghc]]
+        testGroup "Tests" [createTransformTree transformTests, createCompileTree ghc compileTests]
   where
     ingredients = includingOptions [Option (Proxy :: Proxy Compiler)] : defaultIngredients
 
@@ -69,6 +69,14 @@ testsuite = "testsuite"
 groups :: [FilePath]
 groups = ["good", "bad"]
 
+validGroups :: [FilePath]
+validGroups = ["good", "bad"]
+
+lookupTestGroup :: FilePath -> IO TestGroup
+lookupTestGroup group = do
+    testDirs <- getTestDirs (testsuite </> group)
+    return (group, testDirs)
+
 -- | Get a list of all test directories that contain a Haskell file with the same name as the directory
 getTestDirs :: FilePath -> IO [FilePath]
 getTestDirs mainDir = do
@@ -81,17 +89,15 @@ getTestDirs mainDir = do
     where hasMainFile = doesFileExist . toTestFile
           toTestFile dir = dir </> takeBaseName dir <.> "hs"
 
-createTransformTree :: FilePath -> IO TestTree
-createTransformTree group = testGolden group "Transform" runTransformTest <$> getTestDirs (testsuite </> group)
+createTransformTree :: [TestGroup] -> TestTree
+createTransformTree groups = testGroup "Transform tests" $ testGolden "Transform" runTransformTest <$> groups
 
-createCompileTree :: FilePath -> IO (FilePath -> TestTree)
-createCompileTree group = do
-    testDirs <- getTestDirs (testsuite </> group)
-    return $ \ghc -> testGolden group "Compile" (runTransformAndCompileTest ghc) testDirs
+createCompileTree :: FilePath -> [TestGroup] -> TestTree
+createCompileTree ghc groups = testGroup "Compile tests" $ testGolden "Compile" (runTransformAndCompileTest ghc) <$> groups
 
 -- | Perform a given test on a group of test files and compare result with golden file
-testGolden :: String -> String -> (FilePath -> FilePath -> IO ()) -> [FilePath] -> TestTree
-testGolden group test run dirs = testGroup group $ do
+testGolden :: String -> (FilePath -> FilePath -> IO ()) -> TestGroup -> TestTree
+testGolden test run (group, dirs) = testGroup group $ do
     dir <- dirs
     let golden = dir </> takeBaseName dir ++ test <.> "golden"
         out = dir </> takeBaseName dir ++ test <.> "out"
