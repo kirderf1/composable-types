@@ -90,18 +90,22 @@ getTestDirs mainDir = do
           toTestFile dir = dir </> takeBaseName dir <.> "hs"
 
 createTransformTree :: [TestGroup] -> TestTree
-createTransformTree groups = testGroup "Transform tests" $ testGolden "Transform" runTransformTest <$> groups
+createTransformTree groups = testGroup "Transform tests" $ buildTestGroup buildTest <$> groups
+  where buildTest = buildGoldenTest "Transform" runTransformTest
 
 createCompileTree :: FilePath -> [TestGroup] -> TestTree
-createCompileTree ghc groups = testGroup "Compile tests" $ testGolden "Compile" (runTransformAndCompileTest ghc) <$> groups
+createCompileTree ghc groups = testGroup "Compile tests" $ buildTestGroup buildTest <$> groups
+  where buildTest = buildGoldenTest "Compile" (runTransformAndCompileTest ghc)
 
--- | Perform a given test on a group of test files and compare result with golden file
-testGolden :: String -> (FilePath -> FilePath -> IO ()) -> TestGroup -> TestTree
-testGolden test run (group, dirs) = testGroup group $ do
-    dir <- dirs
-    let golden = dir </> takeBaseName dir ++ test <.> "golden"
-        out = dir </> takeBaseName dir ++ test <.> "out"
-    return $ goldenVsFile (takeBaseName dir) golden out (run dir out)
+buildTestGroup :: (FilePath -> TestTree) -> TestGroup -> TestTree
+buildTestGroup testBuilder (group, dirs) = testGroup group $ testBuilder <$> dirs
+
+buildGoldenTest :: String -> (FilePath -> FilePath -> IO ()) -> FilePath -> TestTree
+buildGoldenTest testType execution dir = goldenVsFile name golden out (run dir out)
+  where
+    name = takeBaseName dir
+    golden = dir </> name ++ testType <.> "golden"
+    out = dir </> name ++ testType <.> "out"
 
 -- | Performs transformation on all files in a directory, and write the result to a given output file
 -- The result is either an error or the output for the main test file
