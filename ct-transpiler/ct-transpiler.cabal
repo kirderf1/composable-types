@@ -66,12 +66,14 @@ executable testsuite
                     ct-transpiler,
                     haskell-src-exts,
                     mtl,
-                    tasty,
+                    tasty >= 0.6,
                     tasty-golden,
                     filepath,
                     directory,
                     process,
-                    compdata
+                    compdata,
+                    -- compdata 0.12.1 fails to compile with template-haskell 2.17+
+                    template-haskell < 2.17
   hs-source-dirs:   testsuite
   default-language: Haskell2010
   ghc-options:      -threaded -Wall

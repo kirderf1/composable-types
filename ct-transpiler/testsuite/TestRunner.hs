@@ -1,12 +1,12 @@
 module Main where
 
-import Language.Haskell.Exts
-import Transform
 import TransformFiles
 
 import Test.Tasty.Golden
+import Test.Tasty.Options
 import Test.Tasty
 import Control.Monad.Except
+import Data.Proxy
 import System.FilePath
 import System.Directory
 import System.Process     (readProcessWithExitCode)
@@ -17,10 +17,21 @@ main :: IO ()
 main = do
     clean `mapM_` groups
     transformTests <- createTransformTree `mapM` groups
-    compileTests <- createCompileTree `mapM` ["good"]
-    defaultMain $ testGroup "Tests" 
-        [(testGroup "Transform tests") transformTests, 
-         (testGroup "Compile tests") compileTests]
+    compileTests <- createCompileTree "good"
+    defaultMainWithIngredients ingredients $ askOption $ \(Compiler ghc) ->
+        testGroup "Tests" 
+            [(testGroup "Transform tests") transformTests, 
+             (testGroup "Compile tests") [compileTests ghc]]
+  where
+    ingredients = includingOptions [Option (Proxy :: Proxy Compiler)] : defaultIngredients
+
+newtype Compiler = Compiler String
+
+instance IsOption Compiler where
+  defaultValue = Compiler "ghc"
+  parseValue = Just . Compiler
+  optionName = return "compiler"
+  optionHelp = return "The program used for test compilation"
 
 -- | Clean directory of tests by removing generated "out" directory and ".out files"
 -- If a test directory is empty after that, remove the directory as well.
@@ -73,8 +84,10 @@ getTestDirs mainDir = do
 createTransformTree :: FilePath -> IO TestTree
 createTransformTree group = testGolden group "Transform" runTransformTest <$> getTestDirs (testsuite </> group)
 
-createCompileTree :: FilePath -> IO (TestTree)
-createCompileTree group = testGolden group "Compile" runTransformAndCompileTest <$> getTestDirs (testsuite </> group)
+createCompileTree :: FilePath -> IO (FilePath -> TestTree)
+createCompileTree group = do
+    testDirs <- getTestDirs (testsuite </> group)
+    return $ \ghc -> testGolden group "Compile" (runTransformAndCompileTest ghc) testDirs
 
 -- | Perform a given test on a group of test files and compare result with golden file
 testGolden :: String -> String -> (FilePath -> FilePath -> IO ()) -> [FilePath] -> TestTree
@@ -97,22 +110,22 @@ runTransformTest dir out = do
             createDirectoryIfMissing True $ takeDirectory out
             copyFile file out            
 
-runTransformAndCompileTest :: FilePath -> FilePath -> IO ()
-runTransformAndCompileTest dir out = do
+runTransformAndCompileTest :: FilePath -> FilePath -> FilePath -> IO ()
+runTransformAndCompileTest ghc dir out = do
     let outdir = dir </> "out"
         buildDir = dir </> "build"
         transformOutput = buildDir </> takeBaseName dir <.> "hs"
         transformOutputMain = outdir </> takeBaseName dir <.> "hs"
     runTransformTest dir transformOutput
-    runCompileTest buildDir transformOutputMain out
+    runCompileTest ghc buildDir transformOutputMain out
     removeDirectoryRecursive buildDir
-                  
+
 -- | Compile the main test file in a directory and write either error or "OK" to a given output file
-runCompileTest :: FilePath -> FilePath -> FilePath -> IO ()
-runCompileTest buildDir file outFile = do
+runCompileTest :: FilePath -> FilePath -> FilePath -> FilePath -> IO ()
+runCompileTest ghc buildDir file outFile = do
     createDirectoryIfMissing True buildDir
     let dir = takeDirectory file
-    (exit,_out,err) <- readProcessWithExitCode "ghc" ["-i" ++ lib, "-i" ++ dir, "-outputdir", buildDir, file] []
+    (exit,_out,err) <- readProcessWithExitCode ghc ["-i" ++ lib, "-i" ++ dir, "-outputdir", buildDir, file] []
     case exit of
          ExitSuccess -> writeFileAndCreateDirectory outFile $  "OK \n"
          ExitFailure _ ->  writeFileAndCreateDirectory outFile err
