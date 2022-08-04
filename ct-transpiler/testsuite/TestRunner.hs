@@ -66,9 +66,6 @@ lib = "lib"
 testsuite :: FilePath
 testsuite = "testsuite"
 
-groups :: [FilePath]
-groups = ["good", "bad"]
-
 validGroups :: [FilePath]
 validGroups = ["good", "bad"]
 
@@ -101,7 +98,7 @@ buildTestGroup :: (FilePath -> TestTree) -> TestGroup -> TestTree
 buildTestGroup testBuilder (group, dirs) = testGroup group $ testBuilder <$> dirs
 
 buildGoldenTest :: String -> (FilePath -> FilePath -> IO ()) -> FilePath -> TestTree
-buildGoldenTest testType execution dir = goldenVsFile name golden out (run dir out)
+buildGoldenTest testType execution dir = goldenVsFile name golden out (execution dir out)
   where
     name = takeBaseName dir
     golden = dir </> name ++ testType <.> "golden"
