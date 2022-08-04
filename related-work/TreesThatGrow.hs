@@ -62,6 +62,9 @@ ex = Const_UD 5 `Add_UD` Const_UD 3 `Add_UD` Const_UD 3
 evalUD :: Expr_UD -> Int
 evalUD e = eval (\_ -> 0) e
 
+ex_withoutPattern :: Expr_UD
+ex_withoutPattern = Add void (Const void 5) (Const void 3)
+
 
 
 
@@ -78,12 +81,15 @@ type Expr_S = Expr S
 
 data S
 
-type Sug' = Sug Expr_UD
+type Sug' = Sug S
 
-data Sug e = Neg (X_Neg e) (Sug e) | NegExt (X_NegExt e)
+data Sug e = Neg (X_Neg e) (Expr e) | SugExt (X_SugExt e)
 
 type family X_Neg e
-type family X_NegExt e
+type family X_SugExt e
+
+type instance X_Neg S = Void
+type instance X_SugExt S = Void
 
 
 pattern Sug_S :: Sug' -> Expr_S
@@ -93,17 +99,19 @@ pattern Const_S :: Int -> Expr_S
 pattern Const_S i <- Const _ i
     where Const_S i = Const void i
           
-{-pattern Neg_S :: Expr_S -> Expr_S
+pattern Neg_S :: Expr_S -> Sug'
 pattern Neg_S e <- Neg _ e
-    where Neg_S e = Neg void e -}         
-          
---type Sug_S = Sug' S
+    where Neg_S e = Neg void e
 
--- pattern Neg_S :: Sug_S -> Sug_S
--- pattern Neg_S e <- Neg _ e
---     where Neg_S e = Neg void e
 
 -- neg example
 
--- negEx :: Expr_S
--- negEx = Neg_S (Const_S 5)
+negEx :: Expr_S
+negEx = ExprExt (Neg_S (Const_S 5))
+
+evalSug :: (X_SugExt S -> Int) -> X_ExprExt S -> Int
+evalSug f (Neg_S e) = (-1) * eval (evalSug f) e
+evalSug f (SugExt e) = f e
+
+evalS :: Expr_S -> Int
+evalS e = eval (evalSug (\_ -> 0)) e
