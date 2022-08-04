@@ -1,11 +1,12 @@
 module Main where 
 
-import Language.Haskell.Exts
-import Transform
-import Control.Monad.Except
-import System.Environment
-import System.FilePath
+import Control.Monad.Except (when, void, runExcept, runExceptT)
+import System.Environment (getArgs)
+import System.FilePath (takeExtension)
 
+import Language.Haskell.Exts (Module, SrcSpanInfo, ParseResult(..), prettyPrint, parseFile)
+
+import Transform
 import TransformFiles
 
 -- | Parse arguments from command line and perform a transformation on the file(s) provided,
