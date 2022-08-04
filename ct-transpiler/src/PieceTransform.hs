@@ -54,9 +54,11 @@ coprod (nam:ns) = do
 coprod _ = throwError "Trying to form coproduct of no arguments"
 
 -- | Check if all parts of a composition type are in the category
-checkInCategory :: QName () -> Set (QName ()) -> [QName ()] -> Except String ()
+checkInCategory :: QName () -> Set (Name ()) -> [QName ()] -> Except String ()
 checkInCategory _ _ [] = return ()
-checkInCategory category pieces (p:ps) = if Set.member p pieces
+checkInCategory category pieces (p:ps) = do
+    pieceName <- forceName p
+    if Set.member pieceName pieces
     then checkInCategory category pieces ps
     else throwError $ "Piece: " ++ prettyPrint p ++ " not found in category: " ++ prettyPrint category
 

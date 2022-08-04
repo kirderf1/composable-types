@@ -57,37 +57,37 @@ transformModule _xml = throwError "transformModule not defined for xml formats"
 
 -- | Transform an expression
 transformExp :: Exp () -> Transform (Exp ())
-transformExp e@(Con _ qcon) = do
+transformExp e@(Con _ (UnQual _ con)) = do
     (_, constrs) <- ask
-    if Set.member qcon constrs
+    if Set.member con constrs
         then do
-             smartCon <- Names.qSmartCon qcon
+             smartCon <- Names.qSmartCon (UnQual () con)
              return $ Var () smartCon
         else return e
-transformExp e@(InfixApp _ expr1 (QConOp _ qcon) expr2) = do
+transformExp e@(InfixApp _ expr1 (QConOp _ (UnQual _ con)) expr2) = do
     (_, constrs) <- ask
-    if Set.member qcon constrs
+    if Set.member con constrs
         then do
-             smartCon <- Names.qSmartCon qcon
+             smartCon <- Names.qSmartCon (UnQual () con)
              return $ InfixApp () expr1 (QVarOp () smartCon) expr2
         else return e
-transformExp e@(LeftSection _ expr (QConOp _ qcon)) = do
+transformExp e@(LeftSection _ expr (QConOp _ (UnQual _ con))) = do
     (_, constrs) <- ask
-    if Set.member qcon constrs
+    if Set.member con constrs
         then do
-             smartCon <- Names.qSmartCon qcon
+             smartCon <- Names.qSmartCon (UnQual () con)
              return $ LeftSection () expr (QVarOp () smartCon)
         else return e
-transformExp e@(RightSection _ (QConOp _ qcon) expr) = do
+transformExp e@(RightSection _ (QConOp _ (UnQual _ con)) expr) = do
     (_, constrs) <- ask
-    if Set.member qcon constrs
+    if Set.member con constrs
         then do
-             smartCon <- Names.qSmartCon qcon
+             smartCon <- Names.qSmartCon (UnQual () con)
              return $ RightSection () (QVarOp () smartCon) expr
         else return e
-transformExp e@(RecConstr _ qcon _) = do
+transformExp e@(RecConstr _ (UnQual _ con) _) = do
     (_, constrs) <- ask
-    return $ if Set.member qcon constrs
+    return $ if Set.member con constrs
         then app injectExp e
         else e
 transformExp e = return e
@@ -123,7 +123,7 @@ buildSigCat ((PieceCatDecl _ category):decls) = do
          Just _ -> throwError $ "buildSigCat: category " ++ show category ++ " already declared"
          Nothing -> return $ Map.insert category Set.empty sig
 buildSigCat (_:decls) = buildSigCat decls
-    
+
 -- | Build signature, add pieces to map of categories
 buildSigPiece :: [Decl ()] -> Sig -> Except String Sig
 buildSigPiece [] sig = return sig
@@ -131,7 +131,7 @@ buildSigPiece  ((PieceDecl _ category headName _cons):decls) sig = do
     sig' <- buildSigPiece decls sig
     catName <- forceName category
     case Map.lookup catName sig' of
-        Just oldCons -> return $ Map.insert catName (Set.insert (UnQual () headName) oldCons) sig'
+        Just oldCons -> return $ Map.insert catName (Set.insert headName oldCons) sig'
         Nothing -> throwError $ "Category \"" ++ prettyPrint category ++ "\" not declared."
 buildSigPiece (_:decls) sig = buildSigPiece decls sig
 
@@ -141,7 +141,7 @@ buildConstrs [] = return Set.empty
 buildConstrs ((PieceDecl _ _category _headName cons):decls) = do
     constrs <- buildConstrs decls
     return $ foldr Set.insert constrs (qualConName <$> cons)
-    where qualConName (QualConDecl _ _mForAll _mContext conDecl) = UnQual () (conName conDecl)
+    where qualConName (QualConDecl _ _mForAll _mContext conDecl) = conName conDecl
           conName (ConDecl _ nam _types) = nam
           conName (InfixConDecl _ _type nam _types) = nam
           conName (RecDecl _ nam _fdecls) = nam

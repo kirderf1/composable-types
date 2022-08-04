@@ -16,10 +16,10 @@ import Control.Monad.Reader
 import Control.Monad.Except
 
 -- | Map of category names to pieces
-type Sig = Map (Name ()) (Set (QName ()))
+type Sig = Map (Name ()) (Set (Name ()))
 
 -- | Set of all piece constructors
-type Constrs = Set (QName ())
+type Constrs = Set (Name ())
 
 type Env = (Sig, Constrs)
 
