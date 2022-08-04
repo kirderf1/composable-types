@@ -38,13 +38,12 @@ library
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    array >= 0.1, pretty >= 1.0,
-                      base >= 4.5 && < 5,
+    build-depends:    base >= 4.5 && < 5,
                       haskell-src-exts,
-                      containers,
-                      mtl,
-                      filepath,
-                      directory
+                      containers < 0.7,
+                      mtl < 2.3,
+                      filepath < 1.5,
+                      directory < 1.4
     hs-source-dirs:   src
     default-language: Haskell2010
 
@@ -53,8 +52,8 @@ executable program
     build-depends:    base >= 4.5 && < 5,
                       ct-transpiler,
                       haskell-src-exts,
-                      mtl,
-                      filepath
+                      mtl < 2.3,
+                      filepath < 1.5
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -threaded -Wall
@@ -65,13 +64,13 @@ executable testsuite
   build-depends:    base >= 4.5 && < 5,
                     ct-transpiler,
                     haskell-src-exts,
-                    mtl,
-                    tasty >= 0.6,
-                    tasty-golden,
-                    filepath,
-                    directory,
-                    process,
-                    compdata,
+                    mtl < 2.3,
+                    tasty >= 0.6 && < 1.5,
+                    tasty-golden < 2.4,
+                    filepath < 1.5,
+                    directory < 1.4,
+                    process < 1.7,
+                    compdata < 0.13,
                     -- compdata 0.12.1 fails to compile with template-haskell 2.17+
                     template-haskell < 2.17
   hs-source-dirs:   testsuite
