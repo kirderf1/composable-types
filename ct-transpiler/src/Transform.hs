@@ -119,11 +119,9 @@ buildSigCat :: [Decl ()] -> Except String Sig
 buildSigCat [] = return Map.empty
 buildSigCat ((PieceCatDecl _ category):decls) = do
     sig <- buildSigCat decls
-    let category' = UnQual () category
-
-    case Map.lookup category' sig of
-         Just _ -> throwError $ "buildSigCat: category " ++ show category' ++ " already declared"
-         Nothing -> return $ Map.insert category' Set.empty sig
+    case Map.lookup category sig of
+         Just _ -> throwError $ "buildSigCat: category " ++ show category ++ " already declared"
+         Nothing -> return $ Map.insert category Set.empty sig
 buildSigCat (_:decls) = buildSigCat decls
     
 -- | Build signature, add pieces to map of categories
@@ -131,8 +129,9 @@ buildSigPiece :: [Decl ()] -> Sig -> Except String Sig
 buildSigPiece [] sig = return sig
 buildSigPiece  ((PieceDecl _ category headName _cons):decls) sig = do
     sig' <- buildSigPiece decls sig
-    case Map.lookup category sig' of
-        Just oldCons -> return $ Map.insert category (Set.insert (UnQual () headName) oldCons) sig'
+    catName <- forceName category
+    case Map.lookup catName sig' of
+        Just oldCons -> return $ Map.insert catName (Set.insert (UnQual () headName) oldCons) sig'
         Nothing -> throwError $ "Category \"" ++ prettyPrint category ++ "\" not declared."
 buildSigPiece (_:decls) sig = buildSigPiece decls sig
 

@@ -34,7 +34,8 @@ transformPieceDecl d = return [d]
 transformCompType :: Type () -> Transform (Type ())
 transformCompType (TyComp _ category types) = do
     (cats, _) <- ask
-    case Map.lookup category cats of
+    catName <- forceName category
+    case Map.lookup catName cats of
         Nothing -> throwError $ "Trying to form type of unknown category: " ++ prettyPrint category
         Just pieces -> do 
             lift $ checkInCategory category pieces types

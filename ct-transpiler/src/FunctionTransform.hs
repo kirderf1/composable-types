@@ -15,7 +15,8 @@ import Control.Monad.Except
 transformFunDecl :: Decl () -> Transform [Decl ()]
 transformFunDecl (CompFunDecl _ names mcx category t) = do
     (sig, _) <- ask
-    if Map.member category sig
+    catName <- forceName category
+    if Map.member catName sig
       then concat <$> (declsForName `mapM` names)
       else do
           throwError $ "Expected first argument to be a piece category, was: \"" ++ prettyPrint category ++ "\""

@@ -16,7 +16,7 @@ import Control.Monad.Reader
 import Control.Monad.Except
 
 -- | Map of category names to pieces
-type Sig = Map (QName ()) (Set (QName ()))
+type Sig = Map (Name ()) (Set (QName ()))
 
 -- | Set of all piece constructors
 type Constrs = Set (QName ())
@@ -99,4 +99,9 @@ transformAsst (ParenA _ asst) = do
     case masst' of
          Just asst' -> return (Just (ParenA () asst'))
          Nothing -> return Nothing
-transformAsst asst = return (Just asst) 
+transformAsst asst = return (Just asst)
+
+forceName :: (MonadError String m) => QName () -> m (Name ())
+forceName (UnQual _ name) = return name
+forceName qname           = throwError $ "Can not yet handle qualified names such as " ++ prettyPrint qname
+
