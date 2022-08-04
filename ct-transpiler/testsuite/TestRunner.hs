@@ -2,15 +2,19 @@ module Main where
 
 import TransformFiles
 
-import Test.Tasty.Golden
-import Test.Tasty.Options
-import Test.Tasty
-import Control.Monad.Except
-import Data.Proxy
-import System.FilePath
-import System.Directory
+import qualified Test.Tasty        as Tasty
+import qualified Test.Tasty.Golden as Gold
+import Test.Tasty         (TestTree)
+import Test.Tasty.Options (IsOption(..), OptionDescription(Option))
+
+import Control.Monad.Except (runExceptT, filterM)
+import Data.Proxy (Proxy(Proxy))
+
+import qualified System.Directory as Dir
+import qualified System.FilePath as Path
+import System.FilePath ((</>), (<.>))
+import System.Exit (ExitCode(..))
 import System.Process     (readProcessWithExitCode)
-import System.Exit
 
 type TestGroup = (FilePath, [FilePath])
 
@@ -20,10 +24,10 @@ main = do
     clean `mapM_` validGroups
     transformTests <- lookupTestGroup `mapM` validGroups
     compileTests <- lookupTestGroup `mapM` ["good"]
-    defaultMainWithIngredients ingredients $ askOption $ \(Compiler ghc) ->
-        testGroup "Tests" [createTransformTree transformTests, createCompileTree ghc compileTests]
+    Tasty.defaultMainWithIngredients ingredients $ Tasty.askOption $ \(Compiler ghc) ->
+        Tasty.testGroup "Tests" [createTransformTree transformTests, createCompileTree ghc compileTests]
   where
-    ingredients = includingOptions [Option (Proxy :: Proxy Compiler)] : defaultIngredients
+    ingredients = Tasty.includingOptions [Option (Proxy :: Proxy Compiler)] : Tasty.defaultIngredients
 
 newtype Compiler = Compiler String
 
@@ -41,24 +45,24 @@ clean group = (cleanTest `mapM_`) =<< testDirs
     mainDir = testsuite </> group
     testDirs :: IO [FilePath]
     testDirs = do
-        exists <- doesDirectoryExist mainDir
+        exists <- Dir.doesDirectoryExist mainDir
         if exists
           then getDirectories mainDir
           else return []
     cleanTest :: FilePath -> IO ()
     cleanTest dir = do
         files <- (filter isOutFile) <$> getFiles dir
-        mapM_ removeFile files
+        mapM_ Dir.removeFile files
         let outDir = dir </> "out"
-        existsOut <- doesDirectoryExist outDir
+        existsOut <- Dir.doesDirectoryExist outDir
         if existsOut
-           then removeDirectoryRecursive outDir
+           then Dir.removeDirectoryRecursive outDir
            else return()
-        isEmpty <- (0 ==) . length <$> listDirectory dir
+        isEmpty <- (0 ==) . length <$> Dir.listDirectory dir
         if isEmpty
-          then removeDirectory dir
+          then Dir.removeDirectory dir
           else return ()
-    isOutFile path = takeExtension path == ".out"
+    isOutFile path = Path.takeExtension path == ".out"
 
 lib :: FilePath
 lib = "lib"
@@ -77,30 +81,30 @@ lookupTestGroup group = do
 -- | Get a list of all test directories that contain a Haskell file with the same name as the directory
 getTestDirs :: FilePath -> IO [FilePath]
 getTestDirs mainDir = do
-    exists <- doesDirectoryExist mainDir
+    exists <- Dir.doesDirectoryExist mainDir
     if exists
       then do 
           dirs <- getDirectories mainDir
           filterM hasMainFile $ dirs
       else return []
-    where hasMainFile = doesFileExist . toTestFile
-          toTestFile dir = dir </> takeBaseName dir <.> "hs"
+    where hasMainFile = Dir.doesFileExist . toTestFile
+          toTestFile dir = dir </> Path.takeBaseName dir <.> "hs"
 
 createTransformTree :: [TestGroup] -> TestTree
-createTransformTree groups = testGroup "Transform tests" $ buildTestGroup buildTest <$> groups
+createTransformTree groups = Tasty.testGroup "Transform tests" $ buildTestGroup buildTest <$> groups
   where buildTest = buildGoldenTest "Transform" runTransformTest
 
 createCompileTree :: FilePath -> [TestGroup] -> TestTree
-createCompileTree ghc groups = testGroup "Compile tests" $ buildTestGroup buildTest <$> groups
+createCompileTree ghc groups = Tasty.testGroup "Compile tests" $ buildTestGroup buildTest <$> groups
   where buildTest = buildGoldenTest "Compile" (runTransformAndCompileTest ghc)
 
 buildTestGroup :: (FilePath -> TestTree) -> TestGroup -> TestTree
-buildTestGroup testBuilder (group, dirs) = testGroup group $ testBuilder <$> dirs
+buildTestGroup testBuilder (group, dirs) = Tasty.testGroup group $ testBuilder <$> dirs
 
 buildGoldenTest :: String -> (FilePath -> FilePath -> IO ()) -> FilePath -> TestTree
-buildGoldenTest testType execution dir = goldenVsFile name golden out (execution dir out)
+buildGoldenTest testType execution dir = Gold.goldenVsFile name golden out (execution dir out)
   where
-    name = takeBaseName dir
+    name = Path.takeBaseName dir
     golden = dir </> name ++ testType <.> "golden"
     out = dir </> name ++ testType <.> "out"
 
@@ -113,25 +117,25 @@ runTransformTest dir out = do
     case res of
         Left msg ->  writeFileAndCreateDirectory out $ msg ++ "\n"
         Right _ -> do 
-            let file = outdir </> takeBaseName dir <.> "hs"
-            createDirectoryIfMissing True $ takeDirectory out
-            copyFile file out            
+            let file = outdir </> Path.takeBaseName dir <.> "hs"
+            Dir.createDirectoryIfMissing True $ Path.takeDirectory out
+            Dir.copyFile file out            
 
 runTransformAndCompileTest :: FilePath -> FilePath -> FilePath -> IO ()
 runTransformAndCompileTest ghc dir out = do
     let outdir = dir </> "out"
         buildDir = dir </> "build"
-        transformOutput = buildDir </> takeBaseName dir <.> "hs"
-        transformOutputMain = outdir </> takeBaseName dir <.> "hs"
+        transformOutput = buildDir </> Path.takeBaseName dir <.> "hs"
+        transformOutputMain = outdir </> Path.takeBaseName dir <.> "hs"
     runTransformTest dir transformOutput
     runCompileTest ghc buildDir transformOutputMain out
-    removeDirectoryRecursive buildDir
+    Dir.removeDirectoryRecursive buildDir
 
 -- | Compile the main test file in a directory and write either error or "OK" to a given output file
 runCompileTest :: FilePath -> FilePath -> FilePath -> FilePath -> IO ()
 runCompileTest ghc buildDir file outFile = do
-    createDirectoryIfMissing True buildDir
-    let dir = takeDirectory file
+    Dir.createDirectoryIfMissing True buildDir
+    let dir = Path.takeDirectory file
     (exit,_out,err) <- readProcessWithExitCode ghc ["-i" ++ lib, "-i" ++ dir, "-outputdir", buildDir, file] []
     case exit of
          ExitSuccess -> writeFileAndCreateDirectory outFile $  "OK \n"
@@ -139,15 +143,15 @@ runCompileTest ghc buildDir file outFile = do
 
 writeFileAndCreateDirectory :: FilePath -> String -> IO ()
 writeFileAndCreateDirectory file text = do
-    createDirectoryIfMissing True $ takeDirectory file
-    writeBinaryFile file text
+    Dir.createDirectoryIfMissing True $ Path.takeDirectory file
+    Gold.writeBinaryFile file text
 
 getFiles :: FilePath -> IO [FilePath]
-getFiles directory = listDirectory directory
+getFiles directory = Dir.listDirectory directory
                       >>= return . map (directory </>)
-                      >>= filterM doesFileExist
+                      >>= filterM Dir.doesFileExist
 
 getDirectories :: FilePath -> IO [FilePath]
-getDirectories directory = listDirectory directory
+getDirectories directory = Dir.listDirectory directory
                       >>= return . map (directory </>)
-                      >>= filterM doesDirectoryExist
+                      >>= filterM Dir.doesDirectoryExist
