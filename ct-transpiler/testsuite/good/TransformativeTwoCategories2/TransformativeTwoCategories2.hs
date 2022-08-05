@@ -1,6 +1,6 @@
 {-# LANGUAGE ComposableTypes #-}
 
-module TransforativeTwoCategories2 where
+module TransformativeTwoCategories2 where
 
 piececategory Expr
 

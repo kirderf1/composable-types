@@ -29,6 +29,7 @@ library
     other-modules:    FunctionTransform,
                       PieceTransform,
                       TransformUtils,
+                      TempEnv,
                       GeneratedNames,
                       Utils.Types,
                       Utils.Decls,
@@ -40,6 +41,7 @@ library
     -- other-extensions:
     build-depends:    base >= 4.5 && < 5,
                       haskell-src-exts,
+                      haskell-names,
                       containers < 0.7,
                       mtl < 2.3,
                       filepath < 1.5,

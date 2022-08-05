@@ -11,6 +11,7 @@ import qualified Data.Map as Map
 import           Data.Set   (Set)
 import qualified Data.Set as Set
 import           Data.Maybe (catMaybes)
+import Data.Functor.Identity(runIdentity)
 
 import Control.Monad.Reader
 import Control.Monad.Except
@@ -101,7 +102,17 @@ transformAsst (ParenA _ asst) = do
          Nothing -> return Nothing
 transformAsst asst = return (Just asst)
 
-forceName :: (MonadError String m) => QName () -> m (Name ())
+getModuleName :: Module l -> ModuleName ()
+getModuleName (Module _ (Just (ModuleHead _ name _ _)) _ _ _) = void name
+getModuleName (XmlPage _ name _ _ _ _ _) = void name
+getModuleName (XmlHybrid _ (Just (ModuleHead _ name _ _)) _ _ _ _ _ _ _) = void name
+getModuleName m = main_mod ()
+
+-- | Wraps an Except to an Except transformer
+fromExcept :: (Monad m) => Except e a -> ExceptT e m a
+fromExcept = mapExceptT (return . runIdentity)
+
+forceName :: (MonadError String m) => QName l -> m (Name l)
 forceName (UnQual _ name) = return name
 forceName qname           = throwError $ "Can not yet handle qualified names such as " ++ prettyPrint qname
 

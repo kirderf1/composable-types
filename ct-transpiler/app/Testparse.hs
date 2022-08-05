@@ -1,6 +1,6 @@
 module Main where 
 
-import Control.Monad.Except (when, void, runExcept, runExceptT)
+import Control.Monad.Except (when, void, runExceptT)
 import System.Environment (getArgs)
 import System.FilePath (takeExtension)
 
@@ -32,7 +32,8 @@ main = do
                      showModule ast
                      putStrLn "Pretty-print before:"
                      putStrLn $ prettyPrint ast
-            case runExcept (transform $ void ast) of
+            result <- runExceptT (transform ast)
+            case result of
                 Left msg -> error msg
                 Right ast' -> if debug
                                 then do putStrLn "AST structure after:"

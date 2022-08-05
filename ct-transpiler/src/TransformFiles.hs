@@ -1,6 +1,7 @@
 module TransformFiles (transpileFilesFromDir, transpileFiles) where
 
 import Language.Haskell.Exts
+import Language.Haskell.Names (Environment, readSymbols, writeSymbols, resolve, loadBase)
 
 import Transform
 import TransformUtils
@@ -31,61 +32,45 @@ transpileFilesFromDir dir outdir =
 
 -- | Transpile a list of files and put the transpiled files in a given output directory
 transpileFiles :: FilePath -> [FilePath] -> ExceptT String IO ()
-transpileFiles _ [] = return ()
-transpileFiles outdir (file:toBeTrans) = do
-    toBeTrans' <- transpileFile outdir toBeTrans file
-    transpileFiles outdir toBeTrans'
+transpileFiles outdir files = do
+    modules <- parseModuleFromFile `mapM` files
+    baseEnv <- lift $ loadBase
+    let env = resolve modules baseEnv
+    transpileFile env outdir `mapM_` modules
 
--- | Transpile a single file by also checking their imports and transpiling them if necessary
-transpileFile :: FilePath -> [FilePath] -> FilePath -> ExceptT String IO [FilePath]
-transpileFile outdir toBeTrans file = do
+parseModuleFromFile :: FilePath -> ExceptT String IO (Module SrcSpanInfo)--TODO rename
+parseModuleFromFile file = do
     parseResult <- lift $ parseFile file
     case parseResult of
         f@ParseFailed{} -> throwError $ show f
-        ParseOk m@(Module _ _mhead _pragmas imports _decls) -> do
-            let importFiles = map (readImport (takeDirectory file)) imports
-            (toBeTrans', env) <- checkImports outdir toBeTrans importFiles
-            (ast', env) <- fromExcept (transform' (void m) env) 
-            let result = prettyPrint ast'
-            lift $ createDirectoryIfMissing True outdir
-            lift $ writeFile (outdir </> takeFileName file) $ result ++ "\n"
-            lift $ writeFile (outdir </> takeBaseName file <.> "icomp") $ show env 
-            return toBeTrans'
+        ParseOk m       -> return m
 
--- | Read file name from an import declaration and return absoule path given a directory
-readImport :: FilePath -> ImportDecl l -> FilePath
-readImport dir (ImportDecl {importModule = ModuleName _ nam}) = dir </> nam <.> "hs"
+-- | Transpile a single file by also checking their imports and transpiling them if necessary
+transpileFile :: Environment -> FilePath -> Module SrcSpanInfo -> ExceptT String IO ()
+transpileFile env outdir m@(Module _ _mhead _pragmas imports _decls) = do
+    env <- foldM (loadSymbolsToEnv outdir) env missingImports
+    ast' <- fromExcept (transform' env m)
+    let result = prettyPrint ast'
+    lift $ createDirectoryIfMissing True outdir
+    lift $ writeFile (outdir </> fileName <.> "hs") $ result ++ "\n"
+    case Map.lookup moduleName env of
+      Just symbols -> lift $ writeSymbols (outdir </> fileName <.> "symbols") symbols
+      Nothing      -> return ()
+  where
+    moduleName = getModuleName m
+    fileName = prettyPrint moduleName
+    missingImports = do
+        ImportDecl{importModule = moduleName} <- imports
+        if Map.member (void moduleName) env then [] else [void moduleName]
 
--- | Check a list of imported files and returning their combined environment
--- while also transpiling them if no info file was found
-checkImports :: FilePath -> [FilePath] -> [FilePath] -> ExceptT String IO ([FilePath], Env)
-checkImports outdir toBeTrans [] = return (toBeTrans, emptyEnv)
-checkImports outdir toBeTrans (file:files) = do
-    (toBeTrans', env) <- getEnvFromInfoFile outdir toBeTrans file
-    (toBeTrans'', env') <- checkImports outdir toBeTrans' files
-    let 
-        sig = Map.unionWith Set.union (fst env) (fst env')
-        constrs = Set.union (snd env) (snd env')
-    return (toBeTrans'', (sig, constrs))
-        
--- | Return the environment for a file by checking its info file.
--- If not found, it transpiles the file first.
-getEnvFromInfoFile :: FilePath -> [FilePath] -> FilePath -> ExceptT String IO ([FilePath], Env)
-getEnvFromInfoFile outdir toBeTrans file = do
-    let infoFile = outdir </> takeBaseName file <.> "icomp"
+loadSymbolsToEnv :: FilePath -> Environment -> ModuleName () -> ExceptT String IO Environment
+loadSymbolsToEnv dir env moduleName = do
+    let infoFile = dir </> prettyPrint moduleName <.> ".symbols"
     existsInfo <- lift $ doesFileExist infoFile
     if existsInfo
-        then lift $ do
-                content <- readFile infoFile
-                return $ (toBeTrans, read content)
-        else do
-            let existsModule = List.elem file toBeTrans
-            if existsModule
-               then do 
-                   toBeTrans' <- transpileFile outdir toBeTrans file
-                   getEnvFromInfoFile outdir (List.delete file toBeTrans') file
-               else return (toBeTrans, emptyEnv)
-               
--- | Wraps an Except to and Except transformer
-fromExcept :: (Monad m) => Except e a -> ExceptT e m a
-fromExcept = mapExceptT (return . runIdentity)
+        then do
+            content <- lift $ readSymbols infoFile
+            return $ Map.insert moduleName content env
+        else
+            throwError $ "Unable to find symbols for module " ++ prettyPrint moduleName ++ " at " ++ show infoFile
+

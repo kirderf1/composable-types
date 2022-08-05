@@ -4,11 +4,13 @@
 module Transform (transform, transform') where
 
 import Language.Haskell.Exts
+import Language.Haskell.Names
 
 import qualified GeneratedNames as Names
 import FunctionTransform
 import PieceTransform
 import TransformUtils
+import TempEnv
 import Utils.Types
 import Utils.Decls
 import Utils.Exps
@@ -20,22 +22,21 @@ import qualified Data.Set as Set
 import Control.Monad.Reader
 import Control.Monad.Except
 
-transform :: Module () -> Except String (Module ())
+transform :: Module SrcSpanInfo -> ExceptT String IO (Module ())
 transform m = do
-    (mod, _) <- transform' m emptyEnv
-    return mod
+    baseEnv <- lift $ loadBase
+    fromExcept $ transform' (resolve [m] baseEnv) m
 
 -- | Transform a module by building signature of categories and then transforming the content of the module
-transform' :: Module () -> Env -> Except String (Module (), Env)
-transform' m@(Module _ _mhead _pragmas _imports decls) (importSig, importConstrs) = do
-    sigCat <- buildSigCat decls
-    let sig = Map.unionWith Set.union importSig sigCat
-    sig'    <- buildSigPiece decls sig
-    constrs <- buildConstrs decls
-    let constrs' = Set.union importConstrs constrs
-        env = (sig', constrs')
-    mod <- runReaderT (transformModule m) env
-    return (mod, env)
+transform' :: Environment -> Module SrcSpanInfo -> Except String (Module ())
+transform' env m = do
+    checkForDupCat symbols
+    ensureCategoryIsDeclared env `mapM_` decls
+    runReaderT (transformModule $ void m) (toEnv env)
+  where
+    moduleName = getModuleName m
+    symbols = env Map.! moduleName
+    Module _ _ _ _ decls = annotate env m
 transform' _xml _ = throwError "transform not defined for xml formats" 
 -- ^ XmlPage and XmlHybrid formats not handled (yet)
 
@@ -114,38 +115,22 @@ matchPragma :: String -> ModulePragma () -> Bool
 matchPragma s (LanguagePragma _ [Ident _ nam]) = nam == s
 matchPragma _ _ = False
 
--- | Build signature of categories with empty maps
-buildSigCat :: [Decl ()] -> Except String Sig
-buildSigCat [] = return Map.empty
-buildSigCat ((PieceCatDecl _ category):decls) = do
-    sig <- buildSigCat decls
-    case Map.lookup category sig of
-         Just _ -> throwError $ "buildSigCat: category " ++ show category ++ " already declared"
-         Nothing -> return $ Map.insert category Set.empty sig
-buildSigCat (_:decls) = buildSigCat decls
+checkForDupCat :: [Symbol] -> Except String ()
+checkForDupCat symbols = foldM_ duplicateCheck Set.empty symbols
+  where
+    duplicateCheck set s@PieceCategory{symbolName = category} =
+        if Set.member s set
+        then throwError $ "buildSigCat: category " ++ prettyPrint category ++ " already declared"
+        else return $ Set.insert s set
+    duplicateCheck set _ = return set
 
--- | Build signature, add pieces to map of categories
-buildSigPiece :: [Decl ()] -> Sig -> Except String Sig
-buildSigPiece [] sig = return sig
-buildSigPiece  ((PieceDecl _ category headName _cons):decls) sig = do
-    sig' <- buildSigPiece decls sig
-    catName <- forceName category
-    case Map.lookup catName sig' of
-        Just oldCons -> return $ Map.insert catName (Set.insert headName oldCons) sig'
-        Nothing -> throwError $ "Category \"" ++ prettyPrint category ++ "\" not declared."
-buildSigPiece (_:decls) sig = buildSigPiece decls sig
-
--- | Build set of all piece constructors
-buildConstrs :: [Decl ()] -> Except String Constrs
-buildConstrs [] = return Set.empty
-buildConstrs ((PieceDecl _ _category _headName cons):decls) = do
-    constrs <- buildConstrs decls
-    return $ foldr Set.insert constrs (qualConName <$> cons)
-    where qualConName (QualConDecl _ _mForAll _mContext conDecl) = conName conDecl
-          conName (ConDecl _ nam _types) = nam
-          conName (InfixConDecl _ _type nam _types) = nam
-          conName (RecDecl _ nam _fdecls) = nam
-buildConstrs (_:decls) = buildConstrs decls
+ensureCategoryIsDeclared :: Environment -> Decl (Scoped l) -> Except String ()
+ensureCategoryIsDeclared sig (PieceDecl _ category _ _) = do
+    let (Scoped info _) = ann category
+    case info of
+        GlobalSymbol PieceCategory{} _ -> return ()
+        _                              -> throwError $ "Category \"" ++ prettyPrint category ++ "\" not declared."
+ensureCategoryIsDeclared _ _ = return ()
 
 -- | Modify a list of import declarations to add the ones needed for compdata
 modifyImports :: [ImportDecl ()] -> [ImportDecl ()]
