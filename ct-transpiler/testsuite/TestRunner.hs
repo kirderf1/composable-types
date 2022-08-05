@@ -136,7 +136,7 @@ runCompileTest :: FilePath -> FilePath -> FilePath -> FilePath -> IO ()
 runCompileTest ghc buildDir file outFile = do
     Dir.createDirectoryIfMissing True buildDir
     let dir = Path.takeDirectory file
-    (exit,_out,err) <- readProcessWithExitCode ghc ["-i" ++ lib, "-i" ++ dir, "-outputdir", buildDir, file] []
+    (exit,_out,err) <- readProcessWithExitCode ghc ["-i" ++ lib, "-i" ++ dir, "-outputdir", buildDir, file, "-fno-code"] []
     case exit of
          ExitSuccess -> writeFileAndCreateDirectory outFile $  "OK \n"
          ExitFailure _ ->  writeFileAndCreateDirectory outFile err
