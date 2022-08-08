@@ -1,6 +1,6 @@
 {-# LANGUAGE ComposableTypes #-}
 
-module TyVarInExt where
+module TyVarEx where
 
 piececategory Expr
 

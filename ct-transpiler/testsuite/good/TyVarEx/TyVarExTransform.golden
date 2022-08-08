@@ -4,7 +4,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
-module TyVarInExt where
+module TyVarEx where
 import qualified Data.Comp
 import qualified Data.Comp.Derive
 import qualified ComposableTypes
