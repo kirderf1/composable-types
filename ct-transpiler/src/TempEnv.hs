@@ -1,12 +1,25 @@
-module TempEnv where
+module TempEnv {-# DEPRECATED "" #-} where
 -- This entire module is here to smoothen the transition from our Env to haskell-names' Environment
+import           Data.Map   (Map)
 import qualified Data.Map as Map
+import           Data.Set   (Set)
 import qualified Data.Set as Set
 
 import Language.Haskell.Exts
 import Language.Haskell.Names
 
 import TransformUtils
+
+-- | Map of category names to pieces
+type Sig = Map (Name ()) (Set (Name ()))
+
+-- | Set of all piece constructors
+type Constrs = Set (Name ())
+
+type Env = (Sig, Constrs)
+
+emptyEnv :: Env 
+emptyEnv = (Map.empty, Set.empty)
 
 toEnv :: Environment -> Env
 toEnv env = (sig, constrs)

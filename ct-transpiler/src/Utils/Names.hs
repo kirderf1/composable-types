@@ -5,14 +5,16 @@ import Language.Haskell.Exts
 import           Data.Set   (Set)
 import qualified Data.Set as Set
 
-collectUniqueVars :: Type () -> [Name ()]
+import Control.Monad (void)
+
+collectUniqueVars :: Type l -> [Name l]
 collectUniqueVars = removeDups Set.empty . collectVars
   where
     removeDups _   []         = []
     removeDups set (v:vars) =
-      if Set.member v set
+      if Set.member (void v) set
         then removeDups set vars
-        else v : removeDups (Set.insert v set) vars
+        else v : removeDups (Set.insert (void v) set) vars
 
 class WithVar a where
     collectVars :: a l -> [Name l]

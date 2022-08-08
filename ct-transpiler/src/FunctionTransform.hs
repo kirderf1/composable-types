@@ -1,27 +1,30 @@
 module FunctionTransform (transformFunDecl) where
 
 import Language.Haskell.Exts
+import Language.Haskell.Names (Scoped ())
 
 import qualified GeneratedNames as Names
 import TransformUtils
+import TempEnv
 import Utils.Names
 
 import qualified Data.Map as Map
+import Data.Default
 
 import Control.Monad.Reader
 import Control.Monad.Except
 
 -- | Transform a top level declaration to one or more new declarations
-transformFunDecl :: Decl () -> Transform [Decl ()]
+transformFunDecl :: Decl (Scoped ()) -> Transform [Decl (Scoped ())]
 transformFunDecl (CompFunDecl _ names mcx category t) = do
-    (sig, _) <- ask
-    catName <- forceName category
+    (sig, _) <- toEnv <$> ask
+    catName <- void <$> forceName category
     if Map.member catName sig
       then concat <$> (declsForName `mapM` names)
       else do
           throwError $ "Expected first argument to be a piece category, was: \"" ++ prettyPrint category ++ "\""
   where
-    declsForName :: Name () -> Transform [Decl ()]
+    declsForName :: Name (Scoped ()) -> Transform [Decl (Scoped ())]
     declsForName nam = do
         className <- Names.innerClass nam
         outerClassName <- Names.outerClass nam
@@ -36,86 +39,86 @@ transformFunDecl (CompFunDecl _ names mcx category t) = do
           ]
 transformFunDecl (CompFunExt _ mcx funName types pieceName Nothing) = do
     instHead <- createInstHead Nothing mcx funName types pieceName
-    return [InstDecl () Nothing instHead Nothing]
+    return [InstDecl def Nothing instHead Nothing]
 transformFunDecl (CompFunExt _ mcx funName types pieceName (Just instDecls)) = do 
     instHead <- createInstHead Nothing mcx funName types pieceName
     instDecls' <- mapM transformInstDecl instDecls
-    return [InstDecl () Nothing instHead (Just instDecls')]
+    return [InstDecl def Nothing instHead (Just instDecls')]
 transformFunDecl d = return [d]
 
 -- | Build a declaration of a class corresponding to a function
-functionClass :: Maybe (Context ()) -> Name () -> Name () -> Type () -> [Name ()] -> Transform (Decl ())
+functionClass :: Maybe (Context (Scoped ())) -> Name (Scoped ()) -> Name (Scoped ()) -> Type (Scoped ()) -> [Name (Scoped ())] -> Transform (Decl (Scoped ()))
 functionClass mcx className functionName t classVars = do
-    funType <- transformFunType className (TyApp () (TyVar () (name "f")) (TyParen () term)) t classVars
-    return $ ClassDecl () mcx
+    funType <- transformFunType className (TyApp def (TyVar def (Ident def "f")) (TyParen def term)) t classVars
+    return $ ClassDecl def mcx
         declHeader []
         (Just [classFunctionDecl functionName funType])
   where
-    declHeader = foldl (DHApp ()) (DHead () className) (map (UnkindedVar ()) (name "f" : classVars))
+    declHeader = foldl (DHApp def) (DHead def className) (map (UnkindedVar def) (Ident def "f" : classVars))
 
 -- | Build the inner class declaration
-classFunctionDecl :: Name () -> Type () -> ClassDecl ()
-classFunctionDecl functionName t = ClsDecl () (TypeSig () [functionName] t)
+classFunctionDecl :: Name (Scoped ()) -> Type (Scoped ()) -> ClassDecl (Scoped ())
+classFunctionDecl functionName t = ClsDecl def (TypeSig def [functionName] t)
 
 -- | Build function type
-transformFunType :: Name () -> Type () -> Type () -> [Name ()] -> Transform (Type ())
+transformFunType :: Name (Scoped ()) -> Type (Scoped ()) -> Type (Scoped ()) -> [Name (Scoped ())] -> Transform (Type (Scoped ()))
 transformFunType cname replType ty classVars = do
-    let resT = TyFun () replType ty
-    return (TyForall () Nothing (Just (CxSingle () (ParenA () (TypeA () constraintType)))) resT)
+    let resT = TyFun def replType ty
+    return (TyForall def Nothing (Just (CxSingle def (ParenA def (TypeA def constraintType)))) resT)
   where
-    constraintType = foldl (TyApp ()) (TyCon () (UnQual () cname)) (map (TyVar ()) (name "g" : classVars))
+    constraintType = foldl (TyApp def) (TyCon def (UnQual def cname)) (map (TyVar def) (Ident def "g" : classVars))
 
 -- | Build type for term with parametric part "g"
-term :: Type ()
-term = termApp (TyVar () (name "g"))
+term :: Default l => Type l
+term = termApp (TyVar def (Ident def "g"))
 
 -- | Derives liftSum for the function class
-liftSum :: Name () -> Decl ()
-liftSum className = SpliceDecl () (SpliceExp () (ParenSplice () (app (app (deriveTHListElem "derive") (List () [deriveTHListElem "liftSum"])) (List () [TypQuote () (UnQual () className)]))))
+liftSum :: Name (Scoped ()) -> Decl (Scoped ())
+liftSum className = SpliceDecl def (SpliceExp def (ParenSplice def (App def (App def (deriveTHListElem "derive") (List def [deriveTHListElem "liftSum"])) (List def [TypQuote def (UnQual def className)]))))
 
 -- | Create instance head (roughly the first line of an instance declaration)
-createInstHead :: Maybe [TyVarBind ()] -> Maybe (Context ()) -> Name () -> [Type ()] -> QName () -> Transform (InstRule ())
+createInstHead :: Maybe [TyVarBind (Scoped ())] -> Maybe (Context (Scoped ())) -> Name (Scoped ()) -> [Type (Scoped ())] -> QName (Scoped ()) -> Transform (InstRule (Scoped ()))
 createInstHead mtvs mcx funName types pieceName = do
     className <- Names.innerClass funName
     return $ irule className mcx
   where
-    irule className mcx' = IRule () mtvs mcx' (ihead className types)
-    ihead className [] = IHApp () (IHCon () (UnQual () className)) (TyCon () pieceName)
-    ihead className (t:ts) = IHApp () (ihead className ts) t
+    irule className mcx' = IRule def mtvs mcx' (ihead className types)
+    ihead className [] = IHApp def (IHCon def (UnQual def className)) (TyCon def pieceName)
+    ihead className (t:ts) = IHApp def (ihead className ts) t
 
 -- | Transform an instance declaration to have the function with a prime
-transformInstDecl :: InstDecl () -> Transform (InstDecl ())
-transformInstDecl (InsDecl _ (FunBind () matches)) = do 
+transformInstDecl :: InstDecl (Scoped ()) -> Transform (InstDecl (Scoped ()))
+transformInstDecl (InsDecl l1 (FunBind l2 matches)) = do 
     matches' <- mapM transformMatch matches
-    return $ InsDecl () (FunBind () matches')
+    return $ InsDecl l1 (FunBind l2 matches')
 transformInstDecl _ = throwError "Unexpected type of instance declaration"
 -- TODO: Possibly other constructs for InstDecl
 
 -- | Transform function part of the instance declaration to have a prime on function name
-transformMatch :: Match () -> Transform (Match ())
-transformMatch (Match _ funName patterns rhs maybeBinds) = do
+transformMatch :: Match (Scoped ()) -> Transform (Match (Scoped ()))
+transformMatch (Match l funName patterns rhs maybeBinds) = do
     funName' <- Names.classFunction funName
-    return (Match () funName' patterns rhs maybeBinds)
-transformMatch (InfixMatch _ pat funName patterns rhs maybeBinds) = do
+    return (Match l funName' patterns rhs maybeBinds)
+transformMatch (InfixMatch l pat funName patterns rhs maybeBinds) = do
     funName' <- Names.classFunction funName
-    return (InfixMatch () pat funName' patterns rhs maybeBinds)
+    return (InfixMatch l pat funName' patterns rhs maybeBinds)
 
-outerClass :: Name () -> Name () -> Type () -> [Name ()] -> Decl ()
-outerClass className funName ty classVars = ClassDecl () Nothing declHead [] (Just [classDecl])
+outerClass :: Name (Scoped ()) -> Name (Scoped ()) -> Type (Scoped ()) -> [Name (Scoped ())] -> Decl (Scoped ())
+outerClass className funName ty classVars = ClassDecl def Nothing declHead [] (Just [classDecl])
   where
-    termvar = name "t"
-    declHead = foldl (DHApp ()) (DHead () className) (map (UnkindedVar ()) (termvar : classVars))
-    classDecl = ClsDecl () (TypeSig () [funName] funType)
-    funType = TyFun () (TyVar () termvar) ty
+    termvar = Ident def "t"
+    declHead = foldl (DHApp def) (DHead def className) (map (UnkindedVar def) (termvar : classVars))
+    classDecl = ClsDecl def (TypeSig def [funName] funType)
+    funType = TyFun def (TyVar def termvar) ty
 
-outerInstance :: Name () -> Name () -> Name () -> Name () -> [Name ()] -> Decl ()
-outerInstance innerCName outerCName innerFName outerFName classVars = InstDecl () Nothing instRule (Just [instDecl])
+outerInstance :: Name (Scoped ()) -> Name (Scoped ()) -> Name (Scoped ()) -> Name (Scoped ()) -> [Name (Scoped ())] -> Decl (Scoped ())
+outerInstance innerCName outerCName innerFName outerFName classVars = InstDecl def Nothing instRule (Just [instDecl])
   where
-    coprodvar = TyVar () (name "g")
-    tyvars = map (TyVar ()) classVars
-    instRule = IRule () Nothing (Just (CxSingle () assertion)) instHead
-    instHead = foldl (IHApp ()) (IHCon () (UnQual () outerCName)) (TyParen () (termApp coprodvar) : tyvars)
-    assertion = TypeA () (foldl (TyApp ()) (TyCon () (UnQual () innerCName)) (coprodvar : tyvars))
-    instDecl = InsDecl () (FunBind () [Match () outerFName [] (UnGuardedRhs () funExp) Nothing])
-    funExp = infixApp (var innerFName) (op (sym ".")) (qvar compdata (name "unTerm"))
+    coprodvar = TyVar def (Ident def "g")
+    tyvars = map (TyVar def) classVars
+    instRule = IRule def Nothing (Just (CxSingle def assertion)) instHead
+    instHead = foldl (IHApp def) (IHCon def (UnQual def outerCName)) (TyParen def (termApp coprodvar) : tyvars)
+    assertion = TypeA def (foldl (TyApp def) (TyCon def (UnQual def innerCName)) (coprodvar : tyvars))
+    instDecl = InsDecl def (FunBind def [Match def outerFName [] (UnGuardedRhs def funExp) Nothing])
+    funExp = InfixApp def (Var def $ UnQual def innerFName) (QVarOp def $ UnQual def (Symbol def ".")) (Var def $ Qual def compdata (Ident def "unTerm"))
 

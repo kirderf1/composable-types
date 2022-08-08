@@ -1,52 +1,45 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module TransformUtils where
+module TransformUtils(Transform, compdata, termApp, coprodOp, partOfName, injectExp, deriveTHListElem, transformContext, getModuleName, fromExcept, forceName, def) where
 
 import Language.Haskell.Exts
+import Language.Haskell.Names (Environment, Scoped(..), NameInfo(None))
 
 import qualified GeneratedNames as Names
 
-import           Data.Map   (Map)
-import qualified Data.Map as Map
-import           Data.Set   (Set)
-import qualified Data.Set as Set
 import           Data.Maybe (catMaybes)
 import Data.Functor.Identity(runIdentity)
+import Data.Default
 
 import Control.Monad.Reader
 import Control.Monad.Except
 
--- | Map of category names to pieces
-type Sig = Map (Name ()) (Set (Name ()))
-
--- | Set of all piece constructors
-type Constrs = Set (Name ())
-
-type Env = (Sig, Constrs)
-
-emptyEnv :: Env 
-emptyEnv = (Map.empty, Set.empty)
-
 -- | Transform monad containing signature of categories and handles error messages as Strings.
-type Transform = ReaderT Env (Except String)
+type Transform = ReaderT Environment (Except String)
 
-compdata :: ModuleName ()
-compdata = ModuleName () "Data.Comp"
+compdata :: Default l => ModuleName l
+compdata = ModuleName def "Data.Comp"
 
-termApp :: Type () -> Type ()
-termApp = TyApp () (TyCon () (Qual () compdata (name "Term")))
+termApp :: Default l => Type l -> Type l
+termApp = TyApp def (def <$ termType)
 
--- subName :: QName ()
--- subName = Qual () compdata (Symbol () ":<:")
+termType :: Type ()
+termType = TyCon () (Qual () compdata (name "Term"))
 
-lib :: ModuleName ()
-lib = ModuleName () "ComposableTypes"
+coprodOp :: Default l => Type l -> Type l -> Type l
+coprodOp t1 t2 = TyInfix def t1 (UnpromotedName def coprodName) t2
 
-partOfName :: QName ()
-partOfName = Qual () lib (Ident () "PartOf")
+coprodName :: Default l => QName l
+coprodName = Qual def compdata (Symbol def ":+:")
 
-injectExp :: Exp ()
-injectExp = qvar lib (name "inject'")
+lib :: Default l => ModuleName l
+lib = ModuleName def "ComposableTypes"
+
+partOfName :: Default l => QName l
+partOfName = Qual def lib (Ident def "PartOf")
+
+injectExp :: Default l => Exp l
+injectExp = Var def $ Qual def lib (Ident def "inject'")
 
 -- | Template Haskell derive for a certain data type from a list of things to derive
 deriveTH :: Name () -> [String] -> Decl () 
@@ -64,41 +57,41 @@ deriveTH targetName list = SpliceDecl ()
         )
 
 -- | Element for a thing to derive with Template Haskell
-deriveTHListElem :: String -> Exp ()
-deriveTHListElem nam = qvar (ModuleName () "Data.Comp.Derive") (name nam)
+deriveTHListElem :: Default l => String -> Exp l
+deriveTHListElem nam = Var def (Qual def (ModuleName def "Data.Comp.Derive") (Ident def nam))
 
 -- | Create context from list of assertions
-contextFromList :: [Asst ()] -> Context ()
-contextFromList [] = CxEmpty ()
-contextFromList [a] = CxSingle () a
-contextFromList as = CxTuple () as
+contextFromList :: Default l => [Asst l] -> Context l
+contextFromList [] = CxEmpty def
+contextFromList [a] = CxSingle def a
+contextFromList as = CxTuple def as
 
 -- | Transform constraint to assertion
-constraintToAsst :: Constraint () -> Transform (Maybe (Asst ()))
+constraintToAsst :: Default l => Constraint l -> Transform (Maybe (Asst l))
 constraintToAsst (FunConstraint _ fun v) = do
     cname <- Names.qOuterClass fun
-    return (Just (TypeA () (TyApp () (TyCon () cname) (TyVar () v)))) 
-constraintToAsst (PieceConstraint _ piece v) = return (Just (TypeA () (TyApp () 
-    (TyApp () (TyCon () partOfName)  (TyCon () piece)) (TyVar () v))))
+    return $ (Just (TypeA def (TyApp def (TyCon def cname) (TyVar def v)))) 
+constraintToAsst (PieceConstraint _ piece v) = return $ (Just (TypeA def (TyApp def 
+    (TyApp def (TyCon def partOfName)  (TyCon def piece)) (TyVar def v))))
 constraintToAsst (CategoryConstraint _ _category _v) = return (Nothing)
 
 
-transformContext :: Context () -> Transform (Context ())
-transformContext (CxEmpty _) = return (CxEmpty ())
+transformContext :: Default l => Context l -> Transform (Context l)
+transformContext (CxEmpty _) = return (CxEmpty def)
 transformContext (CxSingle _ asst) = transformContext' [asst]     
 transformContext (CxTuple _ assts) = transformContext' assts
 
-transformContext' :: [Asst ()] -> Transform (Context ())
+transformContext' :: Default l => [Asst l] -> Transform (Context l)
 transformContext' assts = do
     assts' <- mapM transformAsst assts 
     return (contextFromList (catMaybes assts'))
 
-transformAsst :: Asst () -> Transform (Maybe (Asst ()))
+transformAsst :: Default l => Asst l -> Transform (Maybe (Asst l))
 transformAsst (CompCont _ constraint) = constraintToAsst constraint
 transformAsst (ParenA _ asst) = do 
     masst' <- transformAsst asst
     case masst' of
-         Just asst' -> return (Just (ParenA () asst'))
+         Just asst' -> return (Just (ParenA def asst'))
          Nothing -> return Nothing
 transformAsst asst = return (Just asst)
 
@@ -112,7 +105,10 @@ getModuleName m = main_mod ()
 fromExcept :: (Monad m) => Except e a -> ExceptT e m a
 fromExcept = mapExceptT (return . runIdentity)
 
+{-# DEPRECATED forceName "" #-}
 forceName :: (MonadError String m) => QName l -> m (Name l)
 forceName (UnQual _ name) = return name
 forceName qname           = throwError $ "Can not yet handle qualified names such as " ++ prettyPrint qname
 
+instance Default l => Default (Scoped l) where
+    def = Scoped None def
