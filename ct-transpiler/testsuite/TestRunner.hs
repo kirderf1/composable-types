@@ -118,8 +118,8 @@ runTransformTest dir out = do
         Left msg ->  writeFileAndCreateDirectory out $ msg ++ "\n"
         Right _ -> do 
             let file = outdir </> Path.takeBaseName dir <.> "hs"
-            Dir.createDirectoryIfMissing True $ Path.takeDirectory out
-            Dir.copyFile file out            
+            result <- readFile file
+            writeFileAndCreateDirectory out $ result
 
 runTransformAndCompileTest :: FilePath -> FilePath -> FilePath -> IO ()
 runTransformAndCompileTest ghc dir out = do
