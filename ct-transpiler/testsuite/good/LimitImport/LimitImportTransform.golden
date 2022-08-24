@@ -1,0 +1,12 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module LimitImport where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+import Init (Piece(Cons),composable_types_constructor_Cons)
+cons = composable_types_constructor_Cons 0

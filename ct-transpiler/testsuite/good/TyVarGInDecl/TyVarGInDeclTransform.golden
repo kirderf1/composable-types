@@ -1,0 +1,28 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module TyVarGInDecl where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+class Composable_types_inner_class_eval f g where
+        composable_types_class_function_eval ::
+                                               (Composable_types_inner_class_eval g g) =>
+                                               f (Data.Comp.Term g) -> g
+
+$(
+  Data.Comp.Derive.derive [Data.Comp.Derive.liftSum]
+    [''Composable_types_inner_class_eval]
+  )
+
+class Composable_types_outer_class_eval t g where
+        eval :: t -> g
+
+instance Composable_types_inner_class_eval g g =>
+         Composable_types_outer_class_eval (Data.Comp.Term g) g
+         where
+        eval = composable_types_class_function_eval . Data.Comp.unTerm
