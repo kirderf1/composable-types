@@ -1,1 +1,1 @@
-ParseFailed (SrcLoc "comp-transform/testsuite/bad/CategoryInClass/CategoryInClass.hs" 6 5) "Parse error: piececategory"
+ParseFailed (SrcLoc "testsuite/bad/CategoryInClass/CategoryInClass.hs" 6 5) "Parse error: piececategory"
