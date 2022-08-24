@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module TransformUtils(Transform, compdata, termApp, coprodOp, partOfName, injectExp, deriveTHListElem, transformContext, getModuleName, fromExcept, forceName, def) where
+module TransformUtils(Transform, compdata, termApp, coprodOp, partOfName, injectExp, deriveTHListElem, transformContext, getModuleName, fromExcept, def) where
 
 import Language.Haskell.Exts
 import Language.Haskell.Names (Environment, Scoped(..), NameInfo(None))
@@ -104,11 +104,6 @@ getModuleName m = main_mod ()
 -- | Wraps an Except to an Except transformer
 fromExcept :: (Monad m) => Except e a -> ExceptT e m a
 fromExcept = mapExceptT (return . runIdentity)
-
-{-# DEPRECATED forceName "" #-}
-forceName :: (MonadError String m) => QName l -> m (Name l)
-forceName (UnQual _ name) = return name
-forceName qname           = throwError $ "Can not yet handle qualified names such as " ++ prettyPrint qname
 
 instance Default l => Default (Scoped l) where
     def = Scoped None def

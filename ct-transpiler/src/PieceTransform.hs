@@ -2,11 +2,10 @@
 module PieceTransform (transformPieceDecl, transformCompType) where
 
 import Language.Haskell.Exts
-import Language.Haskell.Names (Scoped)
+import Language.Haskell.Names (Scoped(Scoped), NameInfo(GlobalSymbol), Symbol(..))
 
 import qualified GeneratedNames as Names
 import TransformUtils
-import TempEnv
 
 import qualified Data.Map as Map
 import           Data.Set   (Set)
@@ -34,15 +33,15 @@ transformPieceDecl d = return [d]
 
 -- | Transform a type
 transformCompType :: Type (Scoped ()) -> Transform (Type (Scoped ()))
-transformCompType (TyComp _ category types) = do
-    (cats, _) <- toEnv <$> ask
-    catName <- void <$> forceName category
-    case Map.lookup catName cats of
-        Nothing -> throwError $ "Trying to form type of unknown category: " ++ prettyPrint category
-        Just pieces -> do 
-            lift $ checkInCategory category pieces types
+transformCompType (TyComp _ category types) =
+    case catInfo of
+        GlobalSymbol catSymbol@PieceCategory{} _ -> do 
+            lift $ verifyPieceCategory category catSymbol `mapM_` types
             coprodtype <- coprod $ types
             return $ termApp (TyParen def coprodtype)
+        _ -> throwError $ "Trying to form type of unknown category: " ++ prettyPrint category
+    where
+        Scoped catInfo _ = ann category
 transformCompType t = return t
 
 -- | Form coproduct type from a list of pieces
@@ -53,14 +52,14 @@ coprod (nam:ns) = do
     return $ (TyCon def nam) `coprodOp` rest
 coprod _ = throwError "Trying to form coproduct of no arguments"
 
--- | Check if all parts of a composition type are in the category
-checkInCategory :: QName l -> Set (Name ()) -> [QName l] -> Except String ()
-checkInCategory _ _ [] = return ()
-checkInCategory category pieces (p:ps) = do
-    pieceName <- void <$> forceName p
-    if Set.member pieceName pieces
-    then checkInCategory category pieces ps
-    else throwError $ "Piece: " ++ prettyPrint p ++ " not found in category: " ++ prettyPrint category
+verifyPieceCategory :: QName m -> Symbol -> QName (Scoped l) -> Except String ()
+verifyPieceCategory category catSymbol piece =
+    case pieceInfo of
+        GlobalSymbol (Piece {categoryModule = mod, categoryName = nam}) _
+            | mod == symbolModule catSymbol && nam == symbolName catSymbol -> return ()
+        _ -> throwError $ "Piece: " ++ prettyPrint piece ++ " not found in category: " ++ prettyPrint category
+    where
+        Scoped pieceInfo _ = ann piece
 
 {- | Parametrize a piece constructor to have a parametrized variable as recursive 
     parameter instead of the name of the category it belongs to.

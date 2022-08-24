@@ -29,7 +29,6 @@ library
     other-modules:    FunctionTransform,
                       PieceTransform,
                       TransformUtils,
-                      TempEnv,
                       GeneratedNames,
                       Utils.Types,
                       Utils.Decls,

@@ -10,7 +10,6 @@ import qualified GeneratedNames as Names
 import FunctionTransform
 import PieceTransform
 import TransformUtils
-import TempEnv
 import Utils.Types
 import Utils.Decls
 import Utils.Exps
@@ -53,40 +52,43 @@ transformModule _xml = throwError "transformModule not defined for xml formats"
 
 -- | Transform an expression
 transformExp :: Exp (Scoped ()) -> Transform (Exp (Scoped ()))
-transformExp e@(Con l qcon@(UnQual _ con)) = do
-    (_, constrs) <- toEnv <$> ask
-    if Set.member (void con) constrs
+transformExp e@(Con l qcon) = do
+    if isPieceConstructor qcon
         then do
              smartCon <- Names.qSmartCon qcon
              return $ Var l smartCon
         else return e
-transformExp e@(InfixApp l1 expr1 (QConOp l2 qcon@(UnQual _ con)) expr2) = do
-    (_, constrs) <- toEnv <$> ask
-    if Set.member (void con) constrs
+transformExp e@(InfixApp l1 expr1 (QConOp l2 qcon) expr2) = do
+    if isPieceConstructor qcon
         then do
              smartCon <- Names.qSmartCon qcon
              return $ InfixApp l1 expr1 (QVarOp l2 smartCon) expr2
         else return e
-transformExp e@(LeftSection l1 expr (QConOp l2 qcon@(UnQual _ con))) = do
-    (_, constrs) <- toEnv <$> ask
-    if Set.member (void con) constrs
+transformExp e@(LeftSection l1 expr (QConOp l2 qcon)) = do
+    if isPieceConstructor qcon
         then do
              smartCon <- Names.qSmartCon qcon
              return $ LeftSection l1 expr (QVarOp l2 smartCon)
         else return e
-transformExp e@(RightSection l1 (QConOp l2 qcon@(UnQual _ con)) expr) = do
-    (_, constrs) <- toEnv <$> ask
-    if Set.member (void con) constrs
+transformExp e@(RightSection l1 (QConOp l2 qcon) expr) = do
+    if isPieceConstructor qcon
         then do
              smartCon <- Names.qSmartCon qcon
              return $ RightSection l1 (QVarOp l2 smartCon) expr
         else return e
-transformExp e@(RecConstr l (UnQual _ con) _) = do
-    (_, constrs) <- toEnv <$> ask
-    return $ if Set.member (void con) constrs
+transformExp e@(RecConstr l qcon _) = do
+    return $ if isPieceConstructor qcon
         then App l injectExp e
         else e
 transformExp e = return e
+
+isPieceConstructor :: QName (Scoped l) -> Bool
+isPieceConstructor constr =
+    case constrInfo of
+        GlobalSymbol PieceConstructor{} _ -> True
+        _ -> False
+    where
+        Scoped constrInfo _ = ann constr
 
 -- | Modify a list of pragmas to remove ComposableTypes and add the ones needed for compdata
 modifyPragmas :: [ModulePragma (Scoped ())] -> [ModulePragma (Scoped ())]

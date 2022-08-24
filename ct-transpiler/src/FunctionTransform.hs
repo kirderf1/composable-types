@@ -1,11 +1,10 @@
 module FunctionTransform (transformFunDecl) where
 
 import Language.Haskell.Exts
-import Language.Haskell.Names (Scoped ())
+import Language.Haskell.Names (Scoped(Scoped), NameInfo(GlobalSymbol), Symbol(..))
 
 import qualified GeneratedNames as Names
 import TransformUtils
-import TempEnv
 import Utils.Names
 
 import qualified Data.Map as Map
@@ -17,13 +16,11 @@ import Control.Monad.Except
 -- | Transform a top level declaration to one or more new declarations
 transformFunDecl :: Decl (Scoped ()) -> Transform [Decl (Scoped ())]
 transformFunDecl (CompFunDecl _ names mcx category t) = do
-    (sig, _) <- toEnv <$> ask
-    catName <- void <$> forceName category
-    if Map.member catName sig
-      then concat <$> (declsForName `mapM` names)
-      else do
-          throwError $ "Expected first argument to be a piece category, was: \"" ++ prettyPrint category ++ "\""
+    case catInfo of
+        GlobalSymbol PieceCategory{} _ -> concat <$> (declsForName `mapM` names)
+        _ -> throwError $ "Expected first argument to be a piece category, was: \"" ++ prettyPrint category ++ "\""
   where
+    Scoped catInfo _ = ann category
     declsForName :: Name (Scoped ()) -> Transform [Decl (Scoped ())]
     declsForName nam = do
         className <- Names.innerClass nam
