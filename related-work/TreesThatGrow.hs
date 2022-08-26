@@ -5,6 +5,9 @@
 
 module TreesThatGrow where
 
+-- | Basis for this is from:
+-- Shayan Najd and Simon Peyton Jones. Trees that Grow. Journal of Universal Computer Science, 23(1):42–62, 2017
+
 import GHC.Types (Constraint)
 import Data.Void
 

@@ -2,6 +2,13 @@
 
 module DTalC where
 
+-- | Definitions from:
+--  Wouter Swierstra. Data types à la carte. Journal of functional programming, 18(4):423–436, 2008
+-- Basis for desug etc from:
+--  Patrick Bahr and Tom Hvitved. Compositional Data Types. In Proceedings of the seventh ACM SIGPLAN workshop on Generic programming, pages 83–94, 2011
+-- Patrick Bahr. Composing and Decomposing Data types: A Closed Type Families Implementation of Data Types à la Carte. In Proceedings of the 10th ACM SIGPLAN workshop on Generic programming, pages 71–82, 2014.
+--  Patrick Bahr and Tom Hvitved. compdata: Compositional Data Types. https://hackage.haskell.org/package/compdata, 2021
+
 -- | Necessary definitions
 
 data Term f = In (f (Term f ))
