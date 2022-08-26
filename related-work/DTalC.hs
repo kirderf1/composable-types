@@ -1,3 +1,5 @@
+{-#LANGUAGE UndecidableInstances#-}
+
 module DTalC where
 
 -- | Necessary definitions
@@ -73,8 +75,49 @@ negAddExample :: Expr'
 negAddExample = In (Inr (Inl (Add (In (Inl (Const 3)))
                                   (In (Inr (Inr (Neg (In (Inl (Const 5))))))))))
                                   
-                                  
-                                  
+
+-- | Render
+
+class Render f where
+    render :: Render g => f (Term g) -> String
+    
+pretty :: Render f => Term f -> String
+pretty (In t) = render t
+
+instance Render Const where
+    render (Const i) = show i
+    
+instance Render Op where
+    render (Add x y) = "(" ++ pretty x ++ " + " ++ pretty y ++ ")"
+    render (Mul x y) = "(" ++ pretty x ++ " * " ++ pretty y ++ ")"
+    
+instance (Render f, Render g) => Render (f :+: g) where
+    render (Inl x) = render x
+    render (Inr y) = render y
+
+
+  
+-- |  Desug
+  
+class (Functor f, Functor g) => Desug f g where
+    desugAlgebra :: f (Term g) -> (Term g)
+    
+instance {-# OVERLAPPABLE #-} (Functor f, Functor g, f :<: g) => Desug f g where
+    desugAlgebra = inject
+    
+instance (Functor g, Const :<: g, Op :<: g) => Desug Neg g where
+    desugAlgebra (Neg e) = iConst (-1) |*| e
+    
+instance (Desug f h, Desug g h) => Desug (f :+: g) h where
+    desugAlgebra (Inl x) = desugAlgebra x
+    desugAlgebra (Inr y) = desugAlgebra y
+    
+desug :: (Desug f g, Functor f) => Term f -> Term g
+desug = foldTerm desugAlgebra
+                   
+                 
+         
+         
 -- | Subsumption, injection and smart constructors
 
 class (Functor sub, Functor sup) => sub :<: sup where
