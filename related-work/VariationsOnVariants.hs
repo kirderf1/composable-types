@@ -111,23 +111,32 @@ inj' = In . inj
 -- Examples
 
 data Const e = Const Int
--- data Op e = Add e e | Mul e e
+data Op e = Add e e | Mul e e
 data Plus e = Plus e e
 data Times e = Times e e
 
---type Expr = Term (Const :+: Op)
+type Expr = Term (Const :+: Op)
 type Exp = Term (Const :+: Plus)
 type Exp2 = Term (Const :+: Plus :+: Times)
 
 ex :: Exp
 ex = inj' (inj' (Const 1) `Plus` inj' (Const 2))
 
+exOp :: Expr
+exOp = inj' (inj' (Const 1) `Add` inj' (Const 2))
+
 evalConst (Const i) r = i
 evalPlus (Plus e1 e2) r = r e1 + r e2
 evalTimes (Times e1 e2) r = r e1 * r e2
+
+evalOp (Add e1 e2) r = r e1 + r e2
+evalOp (Mul e1 e2) r = r e1 * r e2
 
 cases :: (e (Term e) -> (Term e -> t) -> t) -> Term e -> t
 cases cs = f where f (In e) = cs e f
       
 eval1 :: Exp -> Int
 eval1 = cases (evalConst ? evalPlus)
+
+eval2 :: Expr -> Int
+eval2 = cases (evalConst ? evalOp)
