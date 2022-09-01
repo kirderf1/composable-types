@@ -9,7 +9,7 @@ module VariationsOnVariants where
 data Term e = In (e (Term e))
 data (f :+: g) e = Inl (f e) | Inr (g e)
 
-(<?>) :: f e -> a -> g e -> a -> (f :+: g) e -> a
+(<?>) :: (f e -> a) -> (g e -> a) -> (f :+: g) e -> a
 (f <?> g) (Inl x) = f x
 (f <?> g) (Inr x) = g x
 
@@ -103,3 +103,31 @@ instance Without g h p => Without (f :+: g) h (Ri f p) where
 (?) :: forall f g e r. Without f g (Minus f g) => (g e -> r) -> (OutOf (Minus f g) e -> r) -> f e -> r
 m ? n = (m ?? n) (undefined :: Minus f g)
     
+
+inj' :: (Inj f e (Into f e)) => f (Term e) -> Term e   
+inj' = In . inj
+    
+    
+-- Examples
+
+data Const e = Const Int
+-- data Op e = Add e e | Mul e e
+data Plus e = Plus e e
+data Times e = Times e e
+
+--type Expr = Term (Const :+: Op)
+type Exp = Term (Const :+: Plus)
+type Exp2 = Term (Const :+: Plus :+: Times)
+
+ex :: Exp
+ex = inj' (inj' (Const 1) `Plus` inj' (Const 2))
+
+evalConst (Const i) r = i
+evalPlus (Plus e1 e2) r = r e1 + r e2
+evalTimes (Times e1 e2) r = r e1 * r e2
+
+cases :: (e (Term e) -> (Term e -> t) -> t) -> Term e -> t
+cases cs = f where f (In e) = cs e f
+      
+eval1 :: Exp -> Int
+eval1 = cases (evalConst ? evalPlus)
