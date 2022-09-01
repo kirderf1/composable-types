@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module GeneratedNames (smartCon, qSmartCon, recursiveVar, innerClass, qInnerClass, classFunction, outerClass, qOuterClass) where
+module GeneratedNames (smartCon, qSmartCon, recursiveVar, functorPiece, functorComp, innerClass, qInnerClass, classFunction, outerClass, qOuterClass) where
 
 import Language.Haskell.Exts
 
@@ -16,6 +16,12 @@ qSmartCon = mapQName smartCon
 
 recursiveVar :: Default l => Name l
 recursiveVar = Ident def "composable_types_recursive_var"
+
+functorPiece :: Default l => Name l
+functorPiece = Ident def "f"
+
+functorComp :: Default l => Name l
+functorComp = Ident def "g"
 
 innerClass :: (MonadError String m) => Name l -> m (Name l)
 innerClass = id_prefixed "Composable_types_inner_class_"

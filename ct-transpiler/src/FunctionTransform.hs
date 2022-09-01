@@ -46,12 +46,12 @@ transformFunDecl d = return [d]
 -- | Build a declaration of a class corresponding to a function
 functionClass :: Maybe (Context (Scoped ())) -> Name (Scoped ()) -> Name (Scoped ()) -> Type (Scoped ()) -> [Name (Scoped ())] -> Transform (Decl (Scoped ()))
 functionClass mcx className functionName t classVars = do
-    funType <- transformFunType className (TyApp def (TyVar def (Ident def "f")) (TyParen def term)) t classVars
+    funType <- transformFunType className (TyApp def (TyVar def Names.functorPiece) (TyParen def term)) t classVars
     return $ ClassDecl def mcx
         declHeader []
         (Just [classFunctionDecl functionName funType])
   where
-    declHeader = foldl (DHApp def) (DHead def className) (map (UnkindedVar def) (Ident def "f" : classVars))
+    declHeader = foldl (DHApp def) (DHead def className) (map (UnkindedVar def) (Names.functorPiece : classVars))
 
 -- | Build the inner class declaration
 classFunctionDecl :: Name (Scoped ()) -> Type (Scoped ()) -> ClassDecl (Scoped ())
@@ -63,11 +63,11 @@ transformFunType cname replType ty classVars = do
     let resT = TyFun def replType ty
     return (TyForall def Nothing (Just (CxSingle def (ParenA def (TypeA def constraintType)))) resT)
   where
-    constraintType = foldl (TyApp def) (TyCon def (UnQual def cname)) (map (TyVar def) (Ident def "g" : classVars))
+    constraintType = foldl (TyApp def) (TyCon def (UnQual def cname)) (map (TyVar def) (Names.functorComp : classVars))
 
--- | Build type for term with parametric part "g"
+-- | Build type for term with parametric part
 term :: Default l => Type l
-term = termApp (TyVar def (Ident def "g"))
+term = termApp (TyVar def Names.functorComp)
 
 -- | Derives liftSum for the function class
 liftSum :: Name (Scoped ()) -> Decl (Scoped ())
@@ -111,7 +111,7 @@ outerClass className funName ty classVars = ClassDecl def Nothing declHead [] (J
 outerInstance :: Name (Scoped ()) -> Name (Scoped ()) -> Name (Scoped ()) -> Name (Scoped ()) -> [Name (Scoped ())] -> Decl (Scoped ())
 outerInstance innerCName outerCName innerFName outerFName classVars = InstDecl def Nothing instRule (Just [instDecl])
   where
-    coprodvar = TyVar def (Ident def "g")
+    coprodvar = TyVar def Names.functorComp
     tyvars = map (TyVar def) classVars
     instRule = IRule def Nothing (Just (CxSingle def assertion)) instHead
     instHead = foldl (IHApp def) (IHCon def (UnQual def outerCName)) (TyParen def (termApp coprodvar) : tyvars)
