@@ -123,7 +123,10 @@ ex :: Exp
 ex = inj' (inj' (Const 1) `Plus` inj' (Const 2))
 
 exOp :: Expr
-exOp = inj' (inj' (Const 1) `Add` inj' (Const 2))
+exOp = inj' (inj' (Const 1) `Add` inj' (Const 2)) 
+
+exOp2 :: Expr
+exOp2 = inj' (inj' (Const 3) `Mul` exOp)
 
 evalConst (Const i) r = i
 evalPlus (Plus e1 e2) r = r e1 + r e2
@@ -140,3 +143,44 @@ eval1 = cases (evalConst ? evalPlus)
 
 eval2 :: Expr -> Int
 eval2 = cases (evalConst ? evalOp)
+
+
+
+
+instance Functor Const
+    where fmap _ (Const x) = Const x
+          
+instance Functor Op
+    where fmap f (Add e1 e2) = Add (f e1) (f e2)
+          fmap f (Mul e1 e2) = Mul (f e1) (f e2)
+
+
+data Neg e = Neg e
+
+-- OutOf (Minus f Neg) = g
+-- f :-: Neg = g
+-- desugNeg :: (Without f Neg (Minus f Neg)
+--             , Inj Op (OutOf (Minus f Neg)) (Into Op (OutOf (Minus f Neg)))
+--             , Inj Const (OutOf (Minus f Neg)) (Into Const (OutOf (Minus f Neg)))
+--             , Functor (OutOf (Minus f Neg))) 
+--             => Term f -> Term (OutOf (Minus f Neg))
+desugNeg :: (Without f Neg (Minus f Neg)
+            , Op :<: (f :-: Neg)
+            , Const :<: (f :-: Neg)
+            , Functor (f :-: Neg)) 
+            => Term f -> Term (f :-: Neg)
+desugNeg = cases (neg ? def) where
+    neg (Neg e) r = inj' (Mul (inj' (Const (-1))) (r e))
+    def e r = In (fmap desugNeg e)
+    
+data Double e = Double e
+    
+desugar e = cases ((\(Double e) r -> In (inj (Plus (r e) (r e)))) ? (const . In . fmap desugar)) e
+    
+    
+type f :-: g = OutOf (Minus f g)
+type f :<: g = Inj f g (Into f g)
+    
+
+-- from compdata:
+-- type f :<: g = (Subsume (ComprEmb (Elem f g)) f g)
