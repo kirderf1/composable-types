@@ -110,8 +110,9 @@ pattern Neg_S e <- Neg _ e
 negEx :: Expr_S
 negEx = ExprExt (Neg_S (Const_S 5))
 
-evalSug :: (X_SugExt S -> Int) -> X_ExprExt S -> Int
-evalSug f (Neg_S e) = (-1) * eval (evalSug f) e
+evalSug :: (X_ExprExt e ~ Sug e) => (X_SugExt e -> Int) -> Sug e -> Int
+--evalSug :: (X_SugExt S -> Int) -> X_ExprExt S -> Int
+evalSug f (Neg _ e) = (-1) * eval (evalSug f) e
 evalSug f (SugExt e) = f e
 
 evalS :: Expr_S -> Int
@@ -150,6 +151,7 @@ desugUD = desug absurd
 
 
 desugSug :: (X_SugExt S -> Expr S) -> Sug S -> Expr S
+-- desugSug :: (X_SugExt e -> Expr e) -> Sug e -> Expr e
 desugSug f (Neg _ e) = Mul void (Const void (-1)) (desug (desugSug f) e)
 desugSug f (SugExt e) = f e
 
