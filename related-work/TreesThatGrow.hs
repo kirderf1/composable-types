@@ -111,7 +111,6 @@ negEx :: Expr_S
 negEx = ExprExt (Neg_S (Const_S 5))
 
 evalSug :: (X_ExprExt e ~ Sug e) => (X_SugExt e -> Int) -> Sug e -> Int
---evalSug :: (X_SugExt S -> Int) -> X_ExprExt S -> Int
 evalSug f (Neg _ e) = (-1) * eval (evalSug f) e
 evalSug f (SugExt e) = f e
 
@@ -131,8 +130,8 @@ renderUD :: Expr_UD -> String
 renderUD = render absurd
 
 
-renderSug :: (X_SugExt S -> String) -> X_ExprExt S -> String
-renderSug f (Neg_S e) = "(-" ++ render (renderSug f) e ++ ")"
+renderSug :: (X_ExprExt e ~ Sug e) => (X_SugExt e -> String) -> X_ExprExt e -> String
+renderSug f (Neg _ e) = "(-" ++ render (renderSug f) e ++ ")"
 renderSug f (SugExt e) = f e
 
 renderS :: Expr_S -> String
@@ -140,21 +139,19 @@ renderS e = render (renderSug absurd) e
 
 
 -- | Desug function
-desug :: (X_ExprExt e -> Expr e) -> Expr e -> Expr e
+desug :: (X_ExprExt e -> Expr UD) -> Expr e -> Expr UD
 desug f (ExprExt e) = f e
-desug _ e = e
+desug _ (Const _ i) = Const void i
+desug f (Add _ e1 e2) = Add void (desug f e1) (desug f e2)
+desug f (Mul _ e1 e2) = Mul void (desug f e1) (desug f e2)
 
 
 desugUD :: Expr_UD -> Expr_UD
 desugUD = desug absurd
--- desugUD e = desug (\x -> ExprExt x) e
 
-
-desugSug :: (X_SugExt S -> Expr S) -> Sug S -> Expr S
--- desugSug :: (X_SugExt e -> Expr e) -> Sug e -> Expr e
+desugSug :: (X_ExprExt e ~ Sug e) => (X_SugExt e -> Expr UD) -> Sug e -> Expr UD
 desugSug f (Neg _ e) = Mul void (Const void (-1)) (desug (desugSug f) e)
 desugSug f (SugExt e) = f e
 
-desugS :: Expr_S -> Expr_S
+desugS :: Expr_S -> Expr_UD
 desugS e = desug (desugSug absurd) e
--- desugS e = desug (desugSug (\x -> (Sug_S (SugExt x)))) e
