@@ -157,18 +157,11 @@ instance Functor Op
 
 data Neg e = Neg e
 
--- OutOf (Minus f Neg) = g
--- f :-: Neg = g
--- desugNeg :: (Without f Neg (Minus f Neg)
---             , Inj Op (OutOf (Minus f Neg)) (Into Op (OutOf (Minus f Neg)))
---             , Inj Const (OutOf (Minus f Neg)) (Into Const (OutOf (Minus f Neg)))
---             , Functor (OutOf (Minus f Neg))) 
---             => Term f -> Term (OutOf (Minus f Neg))
-desugNeg :: (Without f Neg (Minus f Neg)
-            , Op :<: (f :-: Neg)
-            , Const :<: (f :-: Neg)
-            , Functor (f :-: Neg)) 
-            => Term f -> Term (f :-: Neg)
+desugNeg :: (f :-: Neg ~ g, Without f Neg (Minus f Neg)
+            , Op :<: g
+            , Const :<: g
+            , Functor g) 
+            => Term f -> Term g
 desugNeg = cases (neg ? def) where
     neg (Neg e) r = inj' (Mul (inj' (Const (-1))) (r e))
     def e r = In (fmap desugNeg e)
@@ -181,6 +174,3 @@ desugar e = cases ((\(Double e) r -> In (inj (Plus (r e) (r e)))) ? (const . In 
 type f :-: g = OutOf (Minus f g)
 type f :<: g = Inj f g (Into f g)
     
-
--- from compdata:
--- type f :<: g = (Subsume (ComprEmb (Elem f g)) f g)
