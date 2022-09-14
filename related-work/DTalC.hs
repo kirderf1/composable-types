@@ -101,6 +101,9 @@ instance Render Op where
 instance (Render f, Render g) => Render (f :+: g) where
     render (Inl x) = render x
     render (Inr y) = render y
+    
+instance Render Neg where
+    render (Neg e) = "(-" ++ pretty e ++ ")"
 
 
   
