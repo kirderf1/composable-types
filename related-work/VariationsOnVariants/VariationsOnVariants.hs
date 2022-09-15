@@ -108,69 +108,14 @@ inj' :: (Inj f e (Into f e)) => f (Term e) -> Term e
 inj' = In . inj
     
     
--- Examples
-
-data Const e = Const Int
-data Op e = Add e e | Mul e e
-data Plus e = Plus e e
-data Times e = Times e e
-
-type Expr = Term (Const :+: Op)
-type Exp = Term (Const :+: Plus)
-type Exp2 = Term (Const :+: Plus :+: Times)
-
-ex :: Exp
-ex = inj' (inj' (Const 1) `Plus` inj' (Const 2))
-
-exOp :: Expr
-exOp = inj' (inj' (Const 1) `Add` inj' (Const 2)) 
-
-exOp2 :: Expr
-exOp2 = inj' (inj' (Const 3) `Mul` exOp)
-
-evalConst (Const i) r = i
-evalPlus (Plus e1 e2) r = r e1 + r e2
-evalTimes (Times e1 e2) r = r e1 * r e2
-
-evalOp (Add e1 e2) r = r e1 + r e2
-evalOp (Mul e1 e2) r = r e1 * r e2
-
 cases :: (e (Term e) -> (Term e -> t) -> t) -> Term e -> t
 cases cs = f where f (In e) = cs e f
       
-eval1 :: Exp -> Int
-eval1 = cases (evalConst ? evalPlus)
-
-eval2 :: Expr -> Int
-eval2 = cases (evalConst ? evalOp)
-
-
-
-
-instance Functor Const
-    where fmap _ (Const x) = Const x
-          
-instance Functor Op
-    where fmap f (Add e1 e2) = Add (f e1) (f e2)
-          fmap f (Mul e1 e2) = Mul (f e1) (f e2)
-
-
-data Neg e = Neg e
-
-desugNeg :: (f :-: Neg ~ g, Without f Neg (Minus f Neg)
-            , Op :<: g
-            , Const :<: g
-            , Functor g) 
-            => Term f -> Term g
-desugNeg = cases (neg ? def) where
-    neg (Neg e) r = inj' (Mul (inj' (Const (-1))) (r e))
-    def e r = In (fmap desugNeg e)
-    
-data Double e = Double e
-    
-desugar e = cases ((\(Double e) r -> In (inj (Plus (r e) (r e)))) ? (const . In . fmap desugar)) e
-    
     
 type f :-: g = OutOf (Minus f g)
 type f :<: g = Inj f g (Into f g)
-    
+
+instance (Functor f , Functor g) => Functor (f :+: g) where
+    fmap f (Inl e1) = Inl (fmap f e1)
+    fmap f (Inr e2) = Inr (fmap f e2) 
+
