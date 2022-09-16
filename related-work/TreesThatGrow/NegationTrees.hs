@@ -9,7 +9,6 @@ import EvalTrees
 import RenderTrees
 import Data.Void
 
-
 -- | Sugar
 
 -- | Type instances for the original Expr type, now containing Sug as as its extension variant
@@ -23,7 +22,7 @@ data S
 -- | Data type for Sug, containing Neg for negation, and is also extensible in fields and variants.
 data Sug e = Neg (X_Neg e) (Expr e) | SugExt (X_SugExt e)
 
--- | The variants of Sug are defined throuh type families 
+-- | The variants of Sug are defined through type families 
 type family X_Neg e
 type family X_SugExt e
 
@@ -42,7 +41,6 @@ pattern Const_S i <- Const _ i
 pattern Neg_S :: Expr S -> Sug S
 pattern Neg_S e <- Neg _ e
     where Neg_S e = Neg void e
-          
           
 -- | Evaluation of Sug          
 evalSug :: (X_ExprExt e ~ Sug e) => (X_SugExt e -> Int) -> Sug e -> Int

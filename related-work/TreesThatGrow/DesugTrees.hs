@@ -7,7 +7,6 @@ import ExprTrees
 import NegationTrees
 import Data.Void
 
-
 -- | Desugaring function for Expr
 desug :: (X_ExprExt e -> Expr UD) -> Expr e -> Expr UD
 desug f (ExprExt e) = f e
