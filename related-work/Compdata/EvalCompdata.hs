@@ -1,16 +1,11 @@
-{-# LANGUAGE TemplateHaskell, TypeOperators, MultiParamTypeClasses,
-  FlexibleInstances, FlexibleContexts, UndecidableInstances,
-  ConstraintKinds #-}
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module EvalCompdata where
 
 import ExprCompdata
 
 import Data.Comp 
-import Data.Comp.Show ()
 import Data.Comp.Derive
-import Data.Comp.Equality
 
 -- Term evaluation algebra
 class Eval f where

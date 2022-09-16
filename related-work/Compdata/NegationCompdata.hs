@@ -1,17 +1,13 @@
-{-# LANGUAGE TemplateHaskell, TypeOperators, MultiParamTypeClasses,
-  FlexibleInstances, FlexibleContexts, UndecidableInstances,
-  ConstraintKinds #-}
+{-# LANGUAGE TemplateHaskell, FlexibleContexts #-}
 {-# LANGUAGE DeriveFunctor #-}
 
-module NegationDTalC where
+module NegationCompdata where
 
 import EvalCompdata 
 import RenderCompdata
 
 import Data.Comp 
-import Data.Comp.Show ()
 import Data.Comp.Derive
-import Data.Comp.Equality
 
 -- | Data type for negation
 data Neg a = Neg a

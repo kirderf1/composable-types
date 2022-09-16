@@ -1,14 +1,10 @@
-{-# LANGUAGE TemplateHaskell, TypeOperators, MultiParamTypeClasses,
-  FlexibleInstances, FlexibleContexts, UndecidableInstances,
-  ConstraintKinds #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators, FlexibleContexts #-}
 {-# LANGUAGE DeriveFunctor #-}
 
 module ExprCompdata where
 
 import Data.Comp 
-import Data.Comp.Show ()
 import Data.Comp.Derive
-import Data.Comp.Equality
 
 -- | Data type for expression language
 
