@@ -60,7 +60,7 @@ evalS :: Expr S -> Int
 evalS e = eval (evalSug absurd) e
 
 -- | Rendering of Sug
-renderSug :: (X_ExprExt e ~ Sug e) => (X_SugExt e -> String) -> X_ExprExt e -> String
+renderSug :: (X_ExprExt e ~ Sug e) => (X_SugExt e -> String) -> Sug e -> String
 renderSug f (Neg _ e) = "(-" ++ render (renderSug f) e ++ ")"
 renderSug f (SugExt e) = f e
 
