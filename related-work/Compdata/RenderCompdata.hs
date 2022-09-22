@@ -15,13 +15,14 @@ class Render f where
 pretty :: (Render f) => Term f -> String
 pretty = render . unTerm 
 
--- | Instances for constants and operations
+-- | Render instance for constants
 instance Render Value where
   render (Const i) = show i
 
+-- | Render instance for operations
 instance Render Op where
   render (Add x y) = "(" ++ pretty x ++ " + " ++ pretty y ++ ")"
   render (Mul x y) = "(" ++ pretty x ++ " * " ++ pretty y ++ ")"
 
--- | Derive instance for coproduct using Template Haskell
+-- | Derive Render instance for coproduct using Template Haskell
 $(derive [liftSum] [''Render])
