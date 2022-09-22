@@ -1,4 +1,6 @@
-module TestDTalC where
+{-# LANGUAGE TypeOperators #-}
+
+module Main where
 
 import DTalC
 import ExprDTalC
@@ -7,18 +9,38 @@ import RenderDTalC
 import NegationDTalC
 import DesugDTalC
 
-addExample :: Expr 
-addExample = In (Inr (Add (In (Inl (Const 3)))
-                              (In (Inl (Const 5)))))
-                                                          
-type Expr' = Term (Const :+: Op :+: Neg)      
+-- | Examples of type Expr, containing constants, addition and multiplication
+addExample :: Expr
+addExample = iAdd (iConst 3) (iConst 5)
 
-negExample :: Expr' 
-negExample = In (Inr (Inr (Neg (In (Inl (Const 5))))))
+addMulExample :: Expr
+addMulExample = iMul (iConst 2) addExample
+                      
+-- | Composed type Expr', also containing negation
+type Expr' = Term (Const :+: Op :+: Neg)
 
-negAddExample :: Expr' 
-negAddExample = In (Inr (Inl (Add (In (Inl (Const 3)))
-                                  (In (Inr (Inr (Neg (In (Inl (Const 5))))))))))
-    
-negAddExample' :: Expr'
-negAddExample' = iConst 3 `iAdd` (iNeg (iConst 5))
+-- | Example with negation
+negAddExample :: Expr'
+negAddExample = iConst 3 `iAdd` (iNeg (iConst 5))
+
+-- | Evaluation examples
+evalAddMul = eval addMulExample
+
+evalNegAdd = eval negAddExample
+
+-- | Render example
+renderNegAdd = pretty negAddExample
+
+-- | Desugar example
+desugNegAdd = pretty (desug negAddExample :: Expr)
+
+-- | Main, printing results of above examples
+main :: IO ()
+main = do
+    putStrLn "Evaluation examples:"
+    print evalAddMul
+    print evalNegAdd
+    putStrLn "Render example:"
+    putStrLn renderNegAdd
+    putStrLn "Desugar example:"
+    putStrLn desugNegAdd
