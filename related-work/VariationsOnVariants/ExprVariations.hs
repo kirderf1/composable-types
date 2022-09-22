@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeOperators #-}
+
 module ExprVariations where
 
 import VariationsOnVariants

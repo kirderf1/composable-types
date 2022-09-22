@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators, TypeFamilies, FlexibleContexts #-}
 
 module DesugVariations where
 
