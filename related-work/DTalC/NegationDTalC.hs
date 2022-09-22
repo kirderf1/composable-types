@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeOperators, FlexibleContexts #-}
+
 module NegationDTalC where
 
 import DTalC

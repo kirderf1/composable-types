@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeOperators #-}
+
 module RenderDTalC where
 
 import DTalC

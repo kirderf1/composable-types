@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeOperators, FlexibleContexts #-}
+
 module ExprDTalC where
 
 import DTalC

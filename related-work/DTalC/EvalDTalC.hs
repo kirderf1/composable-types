@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeOperators #-}
+
 module EvalDTalC where
 
 import DTalC

@@ -1,4 +1,5 @@
-{-#LANGUAGE UndecidableInstances#-}
+{-#LANGUAGE TypeOperators, UndecidableInstances, FlexibleInstances,
+    MultiParamTypeClasses #-}
 
 module DesugDTalC where
 
