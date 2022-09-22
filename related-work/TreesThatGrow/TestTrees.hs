@@ -16,7 +16,7 @@ addMulExample = Mul_UD (Const_UD 2) addExample
 
 -- | Example with negation
 negAddExample :: Expr S
-negAddExample = Const_S 3 `Add_S` (Sug_S (Neg_S (Const_S 5)))
+negAddExample = Const_S 3 `Add_S` (Neg_S (Const_S 5))
 
 -- | Evaluation examples
 evalAddMul = evalUD addMulExample

@@ -31,9 +31,6 @@ type instance X_Neg S = Void
 type instance X_SugExt S = Void
 
  -- | Useful pattern synonyms 
-pattern Sug_S :: Sug S -> Expr S
-pattern Sug_S x = ExprExt x
-
 pattern Const_S :: Int -> Expr S
 pattern Const_S i <- Const _ i
     where Const_S i = Const void i
@@ -45,10 +42,10 @@ pattern Add_S e1 e2 <- Add _ e1 e2
 pattern Mul_S :: Expr S -> Expr S -> Expr S
 pattern Mul_S e1 e2 <- Mul _ e1 e2
     where Mul_S e1 e2 = Mul void e1 e2
-          
-pattern Neg_S :: Expr S -> Sug S
-pattern Neg_S e <- Neg _ e
-    where Neg_S e = Neg void e
+
+pattern Neg_S :: Expr S -> Expr S
+pattern Neg_S e <- ExprExt (Neg _ e)
+    where Neg_S e = ExprExt (Neg void e)
           
 -- | Evaluation of Sug          
 evalSug :: (X_ExprExt e ~ Sug e) => (X_SugExt e -> Int) -> Sug e -> Int
