@@ -10,19 +10,19 @@ import Data.Comp
 import Data.Comp.Derive
 
 -- | Transformative function desug using algebra
-class Desug f v where
-  desugAlg :: Alg f (Term v)
+class Desug f g where
+  desugAlg :: Alg f (Term g)
 
 -- | Lift the desugaring algebra to a catamorphism
-desug :: (Functor f, Desug f v) => Term f -> Term v
+desug :: (Functor f, Desug f g) => Term f -> Term g
 desug = cata desugAlg
 
 -- | Default instance of Desug
-instance {-# OVERLAPPABLE #-} (f :<: v) => Desug f v where
+instance {-# OVERLAPPABLE #-} (f :<: g) => Desug f g where
     desugAlg = inject 
 
 -- | Desug instance for negation 
-instance {-# OVERLAPPABLE #-} (Value :<: v, Op :<: v) => Desug Neg v where
+instance {-# OVERLAPPABLE #-} (Value :<: g, Op :<: g) => Desug Neg g where
     desugAlg (Neg e) = iConst (-1) `iMul` e
 
 -- | Derive Desug instance for coproduct using Template Haskell 

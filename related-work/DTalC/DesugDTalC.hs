@@ -24,7 +24,5 @@ instance (Functor g, Const :<: g, Op :<: g) => Desug Neg g where
     desugAlgebra (Neg e) = iConst (-1) `iMul` e
 
 instance (Desug f h, Desug g h) => Desug (f :+: g) h where
-    desugAlgebra (Inl x) = desugAlgebra x
-    desugAlgebra (Inr y) = desugAlgebra y
-
-
+    desugAlgebra (Inl a) = desugAlgebra a
+    desugAlgebra (Inr b) = desugAlgebra b

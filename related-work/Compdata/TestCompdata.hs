@@ -30,10 +30,10 @@ evalAddMul = eval addMulExample
 evalNegAdd = eval negAddExample
 
 -- | Render example
-renderNegAdd = pretty negAddExample
+renderNegAdd = render negAddExample
 
 -- | Desugar example
-desugNegAdd = pretty (desug negAddExample :: Expr)
+desugNegAdd = render (desug negAddExample :: Expr)
 
 -- | Main, printing results of above examples
 main :: IO ()

@@ -15,14 +15,14 @@ eval = foldTerm evalAlgebra
 
 -- | Eval instance for constants
 instance Eval Const where
-    evalAlgebra (Const x) = x
+    evalAlgebra (Const i) = i
 
 -- | Eval instance for operations
 instance Eval Op where
-    evalAlgebra (Add x y) = x + y
-    evalAlgebra (Mul x y) = x * y
+    evalAlgebra (Add e1 e2) = e1 + e2
+    evalAlgebra (Mul e1 e2) = e1 * e2
 
 -- | Eval instance for coproduct
 instance (Eval f, Eval g) => Eval (f :+: g) where
-    evalAlgebra (Inl x) = evalAlgebra x
-    evalAlgebra (Inr y) = evalAlgebra y
+    evalAlgebra (Inl a) = evalAlgebra a
+    evalAlgebra (Inr b) = evalAlgebra b

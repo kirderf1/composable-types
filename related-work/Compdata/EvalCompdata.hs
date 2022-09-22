@@ -21,8 +21,8 @@ instance Eval Value where
 
 -- | Eval instance for operations
 instance Eval Op where
-  evalAlg (Add x y) = x + y
-  evalAlg (Mul x y) = x * y
+  evalAlg (Add e1 e2) = e1 + e2
+  evalAlg (Mul e1 e2) = e1 * e2
 
 -- | Derive Eval instance for coproduct using Template Haskell
 $(derive [liftSum] [''Eval])

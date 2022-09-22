@@ -18,10 +18,10 @@ $(derive [makeTraversable, makeFoldable,
           makeEqF, makeShowF, smartConstructors, smartAConstructors]
          [''Neg])
 
--- | Instance of the eval function
+-- | Eval instance for negation
 instance Eval Neg where
-    evalAlg (Neg a) = (-1) * a
+    evalAlg (Neg e) = (-1) * e
     
--- | Instance of the render function
+-- | Render instance for negation
 instance Render Neg where
-    render (Neg e) = "(-" ++ pretty e ++ ")"
+    render' (Neg e) = "(-" ++ render e ++ ")"

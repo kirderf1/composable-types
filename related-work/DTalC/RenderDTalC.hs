@@ -7,22 +7,22 @@ import ExprDTalC
 
 -- | Render function, written without an algebra
 class Render f where
-    render :: Render g => f (Term g) -> String
+    render' :: Render g => f (Term g) -> String
 
--- | Unpack a Term and call render
-pretty :: Render f => Term f -> String
-pretty (In t) = render t
+-- | Unpack a Term and call render'
+render :: Render f => Term f -> String
+render (In t) = render' t
 
 -- | Render instance for constants
 instance Render Const where
-    render (Const i) = show i
+    render' (Const i) = show i
 
 -- | Render instance for operations
 instance Render Op where
-    render (Add x y) = "(" ++ pretty x ++ " + " ++ pretty y ++ ")"
-    render (Mul x y) = "(" ++ pretty x ++ " * " ++ pretty y ++ ")"
+    render' (Add e1 e2) = "(" ++ render e1 ++ " + " ++ render e2 ++ ")"
+    render' (Mul e1 e2) = "(" ++ render e1 ++ " * " ++ render e2 ++ ")"
 
 -- | Render instance for coproduct
 instance (Render f, Render g) => Render (f :+: g) where
-    render (Inl x) = render x
-    render (Inr y) = render y
+    render' (Inl a) = render' a
+    render' (Inr b) = render' b

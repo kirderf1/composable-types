@@ -17,10 +17,10 @@ instance Functor Neg where
 iNeg :: (Neg :<: f) => Term f -> Term f
 iNeg e = inject (Neg e)
 
--- | Instance of the eval function
+-- | Eval instance for negation
 instance Eval Neg where
-    evalAlgebra (Neg a) = (-1) * a
+    evalAlgebra (Neg e) = (-1) * e
     
--- | Instance of the render function
+-- | Render instance for negation
 instance Render Neg where
-    render (Neg e) = "(-" ++ pretty e ++ ")"
+    render' (Neg e) = "(-" ++ render e ++ ")"
