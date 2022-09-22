@@ -13,9 +13,10 @@ instance Functor Neg where
     
 -- | Smart constructor?
 
--- TODO: Type signatures
 -- | Evaluation of negation
+evalNeg :: Neg e -> (e -> Int) -> Int
 evalNeg (Neg e) r = (-1) * r e
 
 -- | Rendering of negation
+renderNeg :: Neg e -> (e -> String) -> String
 renderNeg (Neg e) r = "(-" ++ r e ++ ")"
