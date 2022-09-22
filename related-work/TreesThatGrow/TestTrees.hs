@@ -1,4 +1,4 @@
-module TestTrees where
+module Main where
 
 import TreesThatGrow
 import ExprTrees
@@ -7,20 +7,36 @@ import RenderTrees
 import NegationTrees
 import DesugTrees
 
--- example
-incLitX :: Expr UD -> Expr UD
-incLitX (Const_UD i) = Const_UD (i + 1) 
-incLitX e = e
+-- | Examples of type Expr, containing constants, addition and multiplication
+addExample :: Expr UD
+addExample = Add_UD (Const_UD 3) (Const_UD 5)
 
-ex :: Expr UD
-ex = Const_UD 5 `Add_UD` Const_UD 3 `Add_UD` Const_UD 3
+addMulExample :: Expr UD
+addMulExample = Mul_UD (Const_UD 2) addExample
 
+-- | Example with negation
+negAddExample :: Expr S
+negAddExample = Const_S 3 `Add_S` (Sug_S (Neg_S (Const_S 5)))
 
-ex_withoutPattern :: Expr UD
-ex_withoutPattern = Add void (Const void 5) (Const void 3)
+-- | Evaluation examples
+evalAddMul = evalUD addMulExample
 
+evalNegAdd = evalS negAddExample
 
--- neg example
+-- | Render example
+renderNegAdd = renderS negAddExample
 
-negEx :: Expr S
-negEx = ExprExt (Neg_S (Const_S 5))
+-- | Desugar example
+desugNegAdd = renderUD (desugS negAddExample)
+
+-- | Main, printing results of above examples
+main :: IO ()
+main = do
+    putStrLn "Evaluation examples:"
+    print evalAddMul
+    print evalNegAdd
+    putStrLn "Render example:"
+    putStrLn renderNegAdd
+    putStrLn "Desugar example:"
+    putStrLn desugNegAdd
+
