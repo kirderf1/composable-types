@@ -3,11 +3,12 @@ module RenderVariations where
 import VariationsOnVariants
 import ExprVariations
 
--- TODO: Type signatures
 -- | Rendering of constants
+renderConst :: Const e -> r -> String
 renderConst (Const i) r = show i
 
 -- | Rendering of operations
+renderOp :: Op e -> (e -> String) -> String
 renderOp (Add e1 e2) r = "(" ++ r e1 ++ " + " ++ r e2 ++ ")"
 renderOp (Mul e1 e2) r = "(" ++ r e1 ++ " * " ++ r e2 ++ ")"
 
