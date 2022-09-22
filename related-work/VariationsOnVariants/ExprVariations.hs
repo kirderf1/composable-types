@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeOperators, FlexibleContexts #-}
 
 module ExprVariations where
 
@@ -21,4 +21,12 @@ instance Functor Op
     where fmap f (Add e1 e2) = Add (f e1) (f e2)
           fmap f (Mul e1 e2) = Mul (f e1) (f e2)
 
--- | Smart constructors?
+-- | Smart constructors
+iConst :: Const :<: f => Int -> Term f
+iConst x = inj' (Const x)
+
+iAdd :: Op :<: f => Term f -> Term f -> Term f
+iAdd x y = inj' (Add x y)
+
+iMul :: Op :<: f => Term f -> Term f -> Term f
+iMul x y = inj' (Mul x y)
