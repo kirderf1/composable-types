@@ -23,10 +23,10 @@ instance Functor Op
 
 -- | Smart constructors
 iConst :: Const :<: f => Int -> Term f
-iConst x = inj' (Const x)
+iConst x = inject (Const x)
 
 iAdd :: Op :<: f => Term f -> Term f -> Term f
-iAdd x y = inj' (Add x y)
+iAdd x y = inject (Add x y)
 
 iMul :: Op :<: f => Term f -> Term f -> Term f
-iMul x y = inj' (Mul x y)
+iMul x y = inject (Mul x y)

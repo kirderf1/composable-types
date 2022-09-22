@@ -15,7 +15,7 @@ instance Functor Neg where
     
 -- | Smart constructor
 iNeg :: Neg :<: f => Term f -> Term f
-iNeg x = inj' (Neg x)
+iNeg x = inject (Neg x)
 
 -- | Evaluation of negation
 evalNeg :: Neg e -> (e -> Int) -> Int

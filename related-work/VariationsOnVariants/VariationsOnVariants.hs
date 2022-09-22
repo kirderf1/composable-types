@@ -87,8 +87,8 @@ inj :: forall f g e. (Inj f g (Into f g)) => f e -> g e
 inj = injp (undefined :: Into f g)
 
 -- | Auxillary function to simplify injection
-inj' :: (Inj f e (Into f e)) => f (Term e) -> Term e   
-inj' = In . inj
+inject :: (Inj f e (Into f e)) => f (Term e) -> Term e   
+inject = In . inj
 
 
 -- | More auxillary data types

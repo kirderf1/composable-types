@@ -8,7 +8,7 @@ import NegationVariations
 
 -- | Desugaring of negation 
 desugNeg :: (Const :<: f, Op :<: f) => Neg e -> (e -> Term f) -> Term f
-desugNeg (Neg e) r = inj' (Mul (inj' (Const (-1))) (r e))
+desugNeg (Neg e) r = iMul (iConst (-1)) (r e)
 
 -- | Default case for desugaring where there is nothing to desugar
 desugDef :: (f :-: Neg ~ g, Without f Neg (Minus f Neg), 
