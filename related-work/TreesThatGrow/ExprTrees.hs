@@ -3,7 +3,9 @@
 
 module ExprTrees where
 
-import TreesThatGrow
+--- | Basis for this is from:
+--- Shayan Najd and Simon Peyton Jones. Trees that Grow. Journal of Universal Computer Science, 23(1):42–62, 2017
+
 import Data.Void
 
 -- | Data type for expression language
@@ -25,20 +27,20 @@ type family X_ExprExt e
 data UD
 
 -- | Each type instance is Void since there is no extension
-type instance X_Const UD = Void
-type instance X_Add UD = Void
-type instance X_Mul UD = Void
+type instance X_Const UD = ()
+type instance X_Add UD = ()
+type instance X_Mul UD = ()
 type instance X_ExprExt UD = Void
 
 -- | Pattern synonyms that are useful to simplify code
 pattern Const_UD :: Int -> Expr UD
 pattern Const_UD i <- Const _ i
-    where Const_UD i = Const void i
+    where Const_UD i = Const () i
           
 pattern Add_UD :: Expr UD -> Expr UD -> Expr UD
 pattern Add_UD e1 e2 <- Add _ e1 e2
-    where Add_UD e1 e2 = Add void e1 e2
+    where Add_UD e1 e2 = Add () e1 e2
           
 pattern Mul_UD :: Expr UD -> Expr UD -> Expr UD
 pattern Mul_UD e1 e2 <- Mul _ e1 e2
-    where Mul_UD e1 e2 = Mul void e1 e2
+    where Mul_UD e1 e2 = Mul () e1 e2

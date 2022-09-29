@@ -23,5 +23,5 @@ desugSug f (Neg _ e) = Mul_UD (Const_UD (-1)) (desug (desugSug f) e)
 desugSug f (SugExt e) = f e
 
 -- | Desugaring of the version of Expr where it is extended with Sug, where Sug has no extensions
-desugS :: Expr S -> Expr UD
-desugS e = desug (desugSug absurd) e
+desugWithNeg :: Expr WithNeg -> Expr UD
+desugWithNeg e = desug (desugSug absurd) e

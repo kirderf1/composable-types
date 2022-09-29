@@ -1,6 +1,5 @@
 module Main where
 
-import TreesThatGrow
 import ExprTrees
 import EvalTrees
 import RenderTrees
@@ -15,19 +14,19 @@ addMulExample :: Expr UD
 addMulExample = Mul_UD (Const_UD 2) addExample
 
 -- | Example with negation
-negAddExample :: Expr S
-negAddExample = Const_S 3 `Add_S` (Neg_S (Const_S 5))
+negAddExample :: Expr WithNeg
+negAddExample = Const_WithNeg 3 `Add_WithNeg` (Neg_WithNeg (Const_WithNeg 5))
 
 -- | Evaluation examples
 evalAddMul = evalUD addMulExample
 
-evalNegAdd = evalS negAddExample
+evalNegAdd = evalWithNeg negAddExample
 
 -- | Render example
-renderNegAdd = renderS negAddExample
+renderNegAdd = renderWithNeg negAddExample
 
 -- | Desugar example
-desugNegAdd = renderUD (desugS negAddExample)
+desugNegAdd = renderUD (desugWithNeg negAddExample)
 
 -- | Main, printing results of above examples
 main :: IO ()
