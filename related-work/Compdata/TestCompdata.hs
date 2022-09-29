@@ -8,7 +8,7 @@ import RenderCompdata
 import NegationCompdata
 import DesugCompdata
 
-import Data.Comp 
+import Data.Comp hiding (Const)
 
 -- | Examples of type Expr, containing constants, addition and multiplication
 addExample :: Expr
@@ -18,7 +18,7 @@ addMulExample :: Expr
 addMulExample = iMul (iConst 2) addExample
                       
 -- | Composed type Expr', also containing negation
-type Expr' = Term (Value :+: Op :+: Neg)
+type Expr' = Term (Const :+: Op :+: Neg)
 
 -- | Example with negation
 negAddExample :: Expr'

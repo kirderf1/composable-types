@@ -3,22 +3,22 @@
 
 module ExprCompdata where
 
-import Data.Comp 
+import Data.Comp hiding (Const)
 import Data.Comp.Derive
 
 -- | Data type for expression language
 
 -- | Data type variants for Const, Add and Mul
-data Value a = Const Int
+data Const a = Const Int
     deriving Functor
 
 data Op a = Add a a | Mul a a 
     deriving Functor
 
 -- | Composed type Expr
-type Expr = Term (Value :+: Op)
+type Expr = Term (Const :+: Op)
     
 -- | Derivation of smart constructors etc using Template Haskell
 $(derive [makeTraversable, makeFoldable,
           makeEqF, makeShowF, smartConstructors, smartAConstructors]
-         [''Value, ''Op])
+         [''Const, ''Op])

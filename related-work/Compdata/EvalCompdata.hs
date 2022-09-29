@@ -4,7 +4,7 @@ module EvalCompdata where
 
 import ExprCompdata
 
-import Data.Comp 
+import Data.Comp hiding (Const)
 import Data.Comp.Derive
 
 -- | Term evaluation algebra
@@ -16,7 +16,7 @@ eval :: (Functor f, Eval f) => Term f -> Int
 eval = cata evalAlg
 
 -- | Eval instance for constants
-instance Eval Value where
+instance Eval Const where
   evalAlg (Const i) = i
 
 -- | Eval instance for operations

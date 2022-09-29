@@ -4,7 +4,7 @@ module RenderCompdata where
 
 import ExprCompdata
 
-import Data.Comp 
+import Data.Comp hiding (Const)
 import Data.Comp.Derive
 
 -- | Rendering function, written without an algebra
@@ -16,7 +16,7 @@ render :: (Render f) => Term f -> String
 render = render' . unTerm 
 
 -- | Render instance for constants
-instance Render Value where
+instance Render Const where
   render' (Const i) = show i
 
 -- | Render instance for operations
