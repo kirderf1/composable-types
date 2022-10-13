@@ -14,8 +14,7 @@ data Neg a = Neg a
     deriving Functor 
     
 -- | Derivation of smart constructor etc using Template Haskell
-$(derive [makeTraversable, makeFoldable,
-          makeEqF, makeShowF, smartConstructors, smartAConstructors]
+$(derive [makeEqF, makeShowF, smartConstructors]
          [''Neg])
 
 -- | Eval instance for negation

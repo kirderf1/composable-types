@@ -19,6 +19,5 @@ data Op a = Add a a | Mul a a
 type Expr = Term (Const :+: Op)
     
 -- | Derivation of smart constructors etc using Template Haskell
-$(derive [makeTraversable, makeFoldable,
-          makeEqF, makeShowF, smartConstructors, smartAConstructors]
+$(derive [makeEqF, makeShowF, smartConstructors]
          [''Const, ''Op])
