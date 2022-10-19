@@ -26,5 +26,7 @@ class Test {
         System.out.println(threePlusNegFive(new NegEval()).eval()); 
         System.out.println("AsString example:");
         System.out.println(threePlusNegFive(new NegAsString())); 
+        System.out.println("Desug example:");
+        System.out.println(threePlusNegFive(new NegDesug(new ExprAsString())));   
     }
 }
