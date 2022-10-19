@@ -1,15 +1,10 @@
-// Interface for the asString function
-interface AsString {
-    String asString();
-}
-
 // Object algebra for asString of expressions
-class ExprAsString implements ExprAlg<AsString> {
-    public AsString cons(int value) { return () -> Integer.toString(value); }
-    public AsString add(AsString first, AsString second) {
-        return () -> "(" + first.asString() + " + " + second.asString() + ")";
+class ExprAsString implements ExprAlg<String> {
+    public String cons(int value) { return Integer.toString(value); }
+    public String add(String first, String second) {
+        return "(" + first + " + " + second + ")";
     }
-    public AsString mul(AsString first, AsString second) {
-        return () -> "(" + first.asString() + " * " + second.asString() + ")";
+    public String mul(String first, String second) {
+        return "(" + first + " * " + second + ")";
     }
 }

@@ -9,6 +9,6 @@ class NegEval extends ExprEval implements NegAlg<Eval> {
 }
 
 // Object algebra for asString of negation, extending the OA for asString of expressions
-class NegAsString extends ExprAsString implements NegAlg<AsString> {
-    public AsString neg(AsString e) {return () -> "(-" + e.asString() + ")";}
+class NegAsString extends ExprAsString implements NegAlg<String> {
+    public String neg(String e) {return "(-" + e + ")";}
 }
