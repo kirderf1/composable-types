@@ -1,8 +1,3 @@
-// Interface for the desug function
-interface Desug<T> {
-    T desug();
-}
-
 // Object algebra for desug of expressions
 class ExprDesug<T> implements ExprAlg<T> {
     ExprAlg<T> alg;
