@@ -1,6 +1,6 @@
 // Object algebra for asString of expressions
 class ExprAsString implements ExprAlg<String> {
-    public String cons(int value) { return Integer.toString(value); }
+    public String cons(int value) { return String.valueOf(value); }
     public String add(String first, String second) {
         return "(" + first + " + " + second + ")";
     }
