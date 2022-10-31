@@ -74,17 +74,17 @@ liftSum :: Name (Scoped ()) -> Decl (Scoped ())
 liftSum className = SpliceDecl def (SpliceExp def (ParenSplice def (App def (App def (deriveTHListElem "derive") (List def [deriveTHListElem "liftSum"])) (List def [TypQuote def (UnQual def className)]))))
 
 -- | Create instance head (roughly the first line of an instance declaration)
-createInstHead :: Maybe [TyVarBind (Scoped ())] -> Maybe (Context (Scoped ())) -> Name (Scoped ()) -> [Type (Scoped ())] -> QName (Scoped ()) -> Transform (InstRule (Scoped ()))
+createInstHead :: Maybe [TyVarBind (Scoped ())] -> Maybe (Context (Scoped ())) -> QName (Scoped ()) -> [Type (Scoped ())] -> QName (Scoped ()) -> Transform (InstRule (Scoped ()))
 createInstHead mtvs mcx funName types pieceName = do
     checkExtRefs funName pieceName
-    className <- Names.innerClass funName
+    className <- Names.qInnerClass funName
     return $ irule className mcx
   where
     irule className mcx' = IRule def mtvs mcx' (ihead className types)
-    ihead className [] = IHApp def (IHCon def (UnQual def className)) (TyCon def pieceName)
+    ihead className [] = IHApp def (IHCon def className) (TyCon def pieceName)
     ihead className (t:ts) = IHApp def (ihead className ts) t
 
-checkExtRefs :: Name (Scoped ()) -> QName (Scoped ()) -> Transform ()
+checkExtRefs :: QName (Scoped ()) -> QName (Scoped ()) -> Transform ()
 checkExtRefs funName pieceName = do
     funCat <- funCatM
     pieceCat <- pieceCatM
