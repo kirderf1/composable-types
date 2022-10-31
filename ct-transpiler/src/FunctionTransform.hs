@@ -76,12 +76,30 @@ liftSum className = SpliceDecl def (SpliceExp def (ParenSplice def (App def (App
 -- | Create instance head (roughly the first line of an instance declaration)
 createInstHead :: Maybe [TyVarBind (Scoped ())] -> Maybe (Context (Scoped ())) -> Name (Scoped ()) -> [Type (Scoped ())] -> QName (Scoped ()) -> Transform (InstRule (Scoped ()))
 createInstHead mtvs mcx funName types pieceName = do
+    checkExtRefs funName pieceName
     className <- Names.innerClass funName
     return $ irule className mcx
   where
     irule className mcx' = IRule def mtvs mcx' (ihead className types)
     ihead className [] = IHApp def (IHCon def (UnQual def className)) (TyCon def pieceName)
     ihead className (t:ts) = IHApp def (ihead className ts) t
+
+checkExtRefs :: Name (Scoped ()) -> QName (Scoped ()) -> Transform ()
+checkExtRefs funName pieceName = do
+    funCat <- funCatM
+    pieceCat <- pieceCatM
+    if funCat == pieceCat
+    then return ()
+    else throwError $ "Piece: " ++ prettyPrint pieceName ++ " not found in category: " ++ prettyPrint (snd funCat)
+  where
+    Scoped funInfo _ = ann funName
+    Scoped pieceInfo _ = ann pieceName
+    funCatM = case funInfo of
+        GlobalSymbol (ExtFunction {categoryModule = mod, categoryName = nam}) _ -> return (mod, nam)
+        s -> throwError $ "Unknown function: " ++ prettyPrint funName ++ ", " ++ show s
+    pieceCatM = case pieceInfo of
+        GlobalSymbol (Piece {categoryModule = mod, categoryName = nam}) _ -> return (mod, nam)
+        s -> throwError $ "Unknown piece: " ++ prettyPrint pieceName ++ ", " ++ show s
 
 -- | Transform an instance declaration to have the function with a prime
 transformInstDecl :: InstDecl (Scoped ()) -> Transform (InstDecl (Scoped ()))
