@@ -4,12 +4,12 @@ class ExprDesug<T> implements ExprAlg<T> {
     public ExprDesug(ExprAlg<T> alg) {
         this.alg = alg;
     }
-    public T cons(int value) { return alg.cons(value); }
-    public T add(T first, T second) {
-        return alg.add(first, second);
+    public T cons(int i) { return alg.cons(i); }
+    public T add(T e1, T e2) {
+        return alg.add(e1, e2);
     }
-    public T mul(T first, T second) {
-        return alg.mul(first, second);
+    public T mul(T e1, T e2) {
+        return alg.mul(e1, e2);
     }
 }
 

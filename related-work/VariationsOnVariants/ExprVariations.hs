@@ -15,7 +15,7 @@ type Expr = Term (Const :+: Op)
 
 -- | Functors
 instance Functor Const
-    where fmap _ (Const x) = Const x
+    where fmap _ (Const i) = Const i
           
 instance Functor Op
     where fmap f (Add e1 e2) = Add (f e1) (f e2)
@@ -23,10 +23,10 @@ instance Functor Op
 
 -- | Smart constructors
 iConst :: Const :<: f => Int -> Term f
-iConst x = inject (Const x)
+iConst i = inject (Const i)
 
 iAdd :: Op :<: f => Term f -> Term f -> Term f
-iAdd x y = inject (Add x y)
+iAdd e1 e2 = inject (Add e1 e2)
 
 iMul :: Op :<: f => Term f -> Term f -> Term f
-iMul x y = inject (Mul x y)
+iMul e1 e2 = inject (Mul e1 e2)
