@@ -6,5 +6,5 @@ piececategory A
 
 data piece A ==> B = B
 
-c :: A ==> B
+c :: A ==> (B)
 c = B

@@ -10,5 +10,5 @@ data piece Expr ==> Const = Const
   , good :: Bool
   }
 
-newConst :: Expr ==> Const
+newConst :: Expr ==> (Const)
 newConst = Const "x" 2 True
