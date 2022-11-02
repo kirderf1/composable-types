@@ -54,10 +54,10 @@ instance TypeMap Decl where
             MinimalPragma    l b             -> return $ MinimalPragma l b
             RoleAnnotDecl    l t rs          -> return $ RoleAnnotDecl l t rs
             CompletePragma   l cs ty         -> return $ CompletePragma l cs ty
-            PieceDecl   l ca dh cds          -> PieceDecl l ca dh <$> (mapType f `mapM` cds)
+            PieceDecl   l ca mcx dh cds      -> PieceDecl l ca <$> (mapType f `mapM` mcx) <*> mapType f dh <*> (mapType f `mapM` cds)
             PieceCatDecl l ca                -> return $ PieceCatDecl l ca
             CompFunDecl  l ns mcx ca t       -> CompFunDecl l ns <$> (mapType f `mapM` mcx) <*> return ca <*> mapType f t
-            CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapType f `mapM` mcx) <*> return fn <*> mapType f `mapM` ts <*> return pn <*> ((mapType f `mapM`) `mapM` ids)
+            CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapType f `mapM` mcx) <*> return fn <*> mapType f `mapM` ts <*> mapType f pn <*> ((mapType f `mapM`) `mapM` ids)
             
 
 instance TypeMap PatternSynDirection where
@@ -169,7 +169,14 @@ instance TypeMap Type where
           TyBang l b u t                  -> TyBang l b u <$> mapType f t
           TyWildCard l n                -> return $ TyWildCard l n
           TyQuasiQuote l n s            -> return $ TyQuasiQuote l n s
-          TyComp l c t                  -> return $ TyComp l c t
+          TyComp l c t                  -> TyComp l c <$> mapType f `mapM` t
+
+instance TypeMap Constraint where
+    mapType f c = case c of
+        FunConstraint l qn t          -> return $ FunConstraint l qn t
+        PieceConstraint l qn t        -> PieceConstraint l <$> mapType f qn <*> return t
+        CategoryConstraint l qn t     -> return $ CategoryConstraint l qn t
+
 
 instance TypeMap Promoted where
     mapType _ (PromotedInteger l int raw) = return $ PromotedInteger l int raw

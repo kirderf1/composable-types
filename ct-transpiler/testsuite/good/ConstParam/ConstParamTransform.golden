@@ -1,0 +1,48 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module ConstParam where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data Const a composable_types_recursive_var = Const a
+
+composable_types_constructor_Const ::
+                                     ComposableTypes.PartOf (Const a) g => a -> g
+composable_types_constructor_Const arg_1
+  = ComposableTypes.inject' (Const arg_1)
+
+type Consts =
+     Data.Comp.Term ((Const ()) Data.Comp.:+: (Const String))
+
+class Composable_types_inner_class_isUnit f where
+        composable_types_class_function_isUnit ::
+                                                 (Composable_types_inner_class_isUnit g) =>
+                                                 f (Data.Comp.Term g) -> Bool
+
+$(
+  Data.Comp.Derive.derive [Data.Comp.Derive.liftSum]
+    [''Composable_types_inner_class_isUnit]
+  )
+
+class Composable_types_outer_class_isUnit t where
+        isUnit :: t -> Bool
+
+instance Composable_types_inner_class_isUnit g =>
+         Composable_types_outer_class_isUnit (Data.Comp.Term g)
+         where
+        isUnit = composable_types_class_function_isUnit . Data.Comp.unTerm
+
+instance Composable_types_inner_class_isUnit (Const ()) where
+        composable_types_class_function_isUnit (Const ()) = True
+
+instance Composable_types_inner_class_isUnit (Const String) where
+        composable_types_class_function_isUnit (Const str) = False
+
+test :: Consts
+test = composable_types_constructor_Const "test"
+main = isUnit test

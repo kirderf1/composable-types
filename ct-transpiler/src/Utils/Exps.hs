@@ -52,10 +52,10 @@ instance ExpMap Decl where
             MinimalPragma    l b             -> return $ MinimalPragma l b
             RoleAnnotDecl    l t rs          -> return $ RoleAnnotDecl l t rs
             CompletePragma   l cs ty         -> return $ CompletePragma l cs ty
-            PieceDecl   l ca dh cds          -> PieceDecl l ca dh <$> (mapExp f `mapM` cds)
+            PieceDecl   l ca mcx dh cds      -> PieceDecl l ca <$> (mapExp f `mapM` mcx) <*> mapExp f dh <*> (mapExp f `mapM` cds)
             PieceCatDecl l ca                -> return $ PieceCatDecl l ca
             CompFunDecl  l ns mcx ca t       -> CompFunDecl l ns <$> (mapExp f `mapM` mcx) <*> return ca <*> mapExp f t
-            CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapExp f `mapM` mcx) <*> return fn <*> mapExp f `mapM` ts <*> return pn <*> ((mapExp f `mapM`) `mapM` ids)
+            CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapExp f `mapM` mcx) <*> return fn <*> mapExp f `mapM` ts <*> mapExp f pn <*> ((mapExp f `mapM`) `mapM` ids)
             
 
 instance ExpMap PatternSynDirection where
@@ -167,7 +167,14 @@ instance ExpMap Type where
           TyBang l b u t                  -> TyBang l b u <$> mapExp f t
           TyWildCard l n                -> return $ TyWildCard l n
           TyQuasiQuote l n s            -> return $ TyQuasiQuote l n s
-          TyComp l c t                  -> return $ TyComp l c t
+          TyComp l c t                  -> TyComp l c <$> mapExp f `mapM` t
+
+instance ExpMap Constraint where
+    mapExp f c = case c of
+        FunConstraint l qn t          -> return $ FunConstraint l qn t
+        PieceConstraint l qn t        -> PieceConstraint l <$> mapExp f qn <*> return t
+        CategoryConstraint l qn t     -> return $ CategoryConstraint l qn t
+
 
 instance ExpMap Promoted where
     mapExp _ (PromotedInteger l int raw) = return $ PromotedInteger l int raw

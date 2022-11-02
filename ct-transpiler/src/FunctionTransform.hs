@@ -34,11 +34,11 @@ transformFunDecl (CompFunDecl _ names mcx category t) = do
           , outerClass outerClassName nam t tyvarNames
           , outerInstance className outerClassName funcName nam tyvarNames
           ]
-transformFunDecl (CompFunExt _ mcx funName types pieceName Nothing) = do
-    instHead <- createInstHead Nothing mcx funName types pieceName
+transformFunDecl (CompFunExt _ mcx funName types pieceRef Nothing) = do
+    instHead <- createInstHead Nothing mcx funName types pieceRef
     return [InstDecl def Nothing instHead Nothing]
-transformFunDecl (CompFunExt _ mcx funName types pieceName (Just instDecls)) = do 
-    instHead <- createInstHead Nothing mcx funName types pieceName
+transformFunDecl (CompFunExt _ mcx funName types pieceRef (Just instDecls)) = do 
+    instHead <- createInstHead Nothing mcx funName types pieceRef
     instDecls' <- mapM transformInstDecl instDecls
     return [InstDecl def Nothing instHead (Just instDecls')]
 transformFunDecl d = return [d]
@@ -74,14 +74,14 @@ liftSum :: Name (Scoped ()) -> Decl (Scoped ())
 liftSum className = SpliceDecl def (SpliceExp def (ParenSplice def (App def (App def (deriveTHListElem "derive") (List def [deriveTHListElem "liftSum"])) (List def [TypQuote def (UnQual def className)]))))
 
 -- | Create instance head (roughly the first line of an instance declaration)
-createInstHead :: Maybe [TyVarBind (Scoped ())] -> Maybe (Context (Scoped ())) -> QName (Scoped ()) -> [Type (Scoped ())] -> QName (Scoped ()) -> Transform (InstRule (Scoped ()))
-createInstHead mtvs mcx funName types pieceName = do
-    checkExtRefs funName pieceName
+createInstHead :: Maybe [TyVarBind (Scoped ())] -> Maybe (Context (Scoped ())) -> QName (Scoped ()) -> [Type (Scoped ())] -> PieceRef (Scoped ()) -> Transform (InstRule (Scoped ()))
+createInstHead mtvs mcx funName types pieceRef = do
+    checkExtRefs funName (qNameFromRef pieceRef)
     className <- Names.qInnerClass funName
     return $ irule className mcx
   where
     irule className mcx' = IRule def mtvs mcx' (ihead className types)
-    ihead className [] = IHApp def (IHCon def className) (TyCon def pieceName)
+    ihead className [] = IHApp def (IHCon def className) (pieceRefAsType pieceRef)
     ihead className (t:ts) = IHApp def (ihead className ts) t
 
 checkExtRefs :: QName (Scoped ()) -> QName (Scoped ()) -> Transform ()

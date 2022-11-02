@@ -16,15 +16,15 @@ import Control.Monad.Except
 
 -- | Transform a top level declaration to one or more new declarations
 transformPieceDecl :: Decl (Scoped ()) -> Transform [Decl (Scoped ())]
-transformPieceDecl (PieceDecl _ category pieceName cons) = 
+transformPieceDecl (PieceDecl _ category context declHead cons) = 
     let cspar = map (parametConstructor Names.recursiveVar (void category)) cons
         in do
-    smartCons <- concat <$> mapM (smartCon (void category) pieceName) cons
+    smartCons <- concat <$> mapM (smartCon (void category) context declHead) cons
     return (DataDecl 
         def
         (DataType def)
         Nothing 
-        (DHApp def (DHead def pieceName) (UnkindedVar def Names.recursiveVar))
+        (DHApp def (declHead) (UnkindedVar def Names.recursiveVar))
         cspar
         []
         : smartCons)
@@ -33,11 +33,11 @@ transformPieceDecl d = return [d]
 
 -- | Transform a type
 transformCompType :: Type (Scoped ()) -> Transform (Type (Scoped ()))
-transformCompType (TyComp _ category types) =
+transformCompType (TyComp _ category piecerefs) =
     case catInfo of
         GlobalSymbol catSymbol@PieceCategory{} _ -> do 
-            lift $ verifyPieceCategory category catSymbol `mapM_` types
-            coprodtype <- coprod $ types
+            lift $ verifyPieceCategory category catSymbol `mapM_` piecerefs
+            coprodtype <- coprod piecerefs
             return $ termApp (TyParen def coprodtype)
         _ -> throwError $ "Trying to form type of unknown category: " ++ prettyPrint category
     where
@@ -45,21 +45,21 @@ transformCompType (TyComp _ category types) =
 transformCompType t = return t
 
 -- | Form coproduct type from a list of pieces
-coprod :: [QName (Scoped ())] -> Transform (Type (Scoped ()))
-coprod [nam] = return $ TyCon def nam
-coprod (nam:ns) = do
-    rest <- coprod ns
-    return $ (TyCon def nam) `coprodOp` rest
+coprod :: [PieceRef (Scoped ())] -> Transform (Type (Scoped ()))
+coprod [ref] = return $ pieceRefAsType ref
+coprod (ref:rs) = do
+    rest <- coprod rs
+    return $ (pieceRefAsType ref) `coprodOp` rest
 coprod _ = throwError "Trying to form coproduct of no arguments"
 
-verifyPieceCategory :: QName m -> Symbol -> QName (Scoped l) -> Except String ()
+verifyPieceCategory :: QName m -> Symbol -> PieceRef (Scoped l) -> Except String ()
 verifyPieceCategory category catSymbol piece =
     case pieceInfo of
         GlobalSymbol (Piece {categoryModule = mod, categoryName = nam}) _
             | mod == symbolModule catSymbol && nam == symbolName catSymbol -> return ()
         _ -> throwError $ "Piece: " ++ prettyPrint piece ++ " not found in category: " ++ prettyPrint category
     where
-        Scoped pieceInfo _ = ann piece
+        Scoped pieceInfo _ = ann (qNameFromRef piece)
 
 {- | Parametrize a piece constructor to have a parametrized variable as recursive 
     parameter instead of the name of the category it belongs to.
@@ -86,21 +86,24 @@ collectTypes (QualConDecl _ _ _ conDecl) = conDeclArgs conDecl
     conDeclArgs (RecDecl _ nam fields) = (nam, concat $ map fieldTypes fields)
       where fieldTypes (FieldDecl _ names ty) = replicate (length names) ty
 
-smartCon :: QName () -> Name (Scoped ()) -> QualConDecl (Scoped ()) -> Transform [Decl (Scoped ())]
-smartCon cat piece con = do
+smartCon :: QName () -> Maybe (Context (Scoped ())) -> DeclHead (Scoped ()) -> QualConDecl (Scoped ()) -> Transform [Decl (Scoped ())]
+smartCon cat ctx dh con = do
     funName <- Names.smartCon conName
     let pattern = PApp def (UnQual def funName) (PVar def <$> argNames)
-    return $ [typeBinding funName, PatBind def pattern (UnGuardedRhs def expr) Nothing]
+    let typeBinding = TypeSig def [funName] (TyForall def Nothing (extendContext subAssertion ctx) funType)
+    return $ [typeBinding, PatBind def pattern (UnGuardedRhs def expr) Nothing]
   where
     (conName, argTypes) = collectTypes con
     args = length argTypes
     argNames = (\arg -> Ident def $ "arg_" ++ show (arg)) <$> [1..args]
     internalType = TyVar def (Ident def "g")    
-    replaceCat (TyCon def tycon) | void tycon == cat = internalType
+    replaceCat (TyCon def tycon) | void tycon == cat = internalType --TODO use name annotation CatReference instead
     replaceCat t                               = t
     funType = foldr (TyFun def) internalType (replaceCat <$> argTypes)
-    subAssertion = TypeA def (TyApp def (TyApp def (TyCon def partOfName) (TyCon def (UnQual def piece))) internalType)
-    typeBinding funName = TypeSig def [funName] (TyForall def Nothing (Just (CxSingle def subAssertion)) funType)
-    
+    buildPieceType (DHead _ name) = TyCon def (UnQual def name)
+    buildPieceType (DHInfix _ typeVar name) = TyApp def (TyCon def (UnQual def name)) (TyVar def (tyVarName typeVar))
+    buildPieceType (DHParen _ dh) = TyParen def (buildPieceType dh)
+    buildPieceType (DHApp _ dh typeVar) = TyApp def (buildPieceType dh) (TyVar def (tyVarName typeVar))
+    subAssertion = TypeA def (TyApp def (TyApp def (TyCon def partOfName) (buildPieceType dh)) internalType)
     expr = App def injectExp (foldl (App def) (Con def $ UnQual def conName) (Var def . UnQual def <$> argNames))
 

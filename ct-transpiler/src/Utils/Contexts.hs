@@ -54,10 +54,10 @@ instance ContextMap Decl where
             MinimalPragma    l b             -> return $ MinimalPragma l b
             RoleAnnotDecl    l t rs          -> return $ RoleAnnotDecl l t rs
             CompletePragma   l cs ty         -> return $ CompletePragma l cs ty
-            PieceDecl   l ca dh cds          -> PieceDecl l ca dh <$> (mapContext f `mapM` cds)
+            PieceDecl   l ca mcx dh cds      -> PieceDecl l ca <$> (mapContext f `mapM` mcx) <*> mapContext f dh <*> (mapContext f `mapM` cds)
             PieceCatDecl l ca                -> return $ PieceCatDecl l ca
             CompFunDecl  l ns mcx ca t       -> CompFunDecl l ns <$> (mapContext f `mapM` mcx) <*> return ca <*> mapContext f t
-            CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapContext f `mapM` mcx) <*> return fn <*> mapContext f `mapM` ts <*> return pn <*> ((mapContext f `mapM`) `mapM` ids)
+            CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapContext f `mapM` mcx) <*> return fn <*> mapContext f `mapM` ts <*> mapContext f pn <*> ((mapContext f `mapM`) `mapM` ids)
             
 
 instance ContextMap PatternSynDirection where
@@ -169,7 +169,13 @@ instance ContextMap Type where
           TyBang l b u t                  -> TyBang l b u <$> mapContext f t
           TyWildCard l n                -> return $ TyWildCard l n
           TyQuasiQuote l n s            -> return $ TyQuasiQuote l n s
-          TyComp l c t                  -> return $ TyComp l c t
+          TyComp l c t                  -> TyComp l c <$>  mapContext f `mapM` t
+
+instance ContextMap Constraint where
+    mapContext f c = case c of
+        FunConstraint l qn t          -> return $ FunConstraint l qn t
+        PieceConstraint l qn t        -> PieceConstraint l <$> mapContext f qn <*> return t
+        CategoryConstraint l qn t     -> return $ CategoryConstraint l qn t
 
 instance ContextMap Promoted where
     mapContext _ (PromotedInteger l int raw) = return $ PromotedInteger l int raw
@@ -194,7 +200,7 @@ instance ContextMap Asst where
         TypeA l t           -> TypeA l <$> mapContext f t
         IParam l ipn t      -> IParam l ipn <$> mapContext f t
         ParenA l a          -> ParenA l <$> mapContext f a
-        CompCont l c        -> return $ CompCont l c
+        CompCont l c        -> CompCont l <$> mapContext f c
 
 instance ContextMap Exp where
     mapContext f e1 = case e1 of

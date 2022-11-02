@@ -122,7 +122,7 @@ checkForDupCat symbols = foldM_ duplicateCheck Set.empty symbols
     duplicateCheck set _ = return set
 
 ensureCategoryIsDeclared :: Decl (Scoped l) -> Transform ()
-ensureCategoryIsDeclared (PieceDecl _ category _ _) = do
+ensureCategoryIsDeclared (PieceDecl _ category _ _ _) = do
     let (Scoped info _) = ann category
     case info of
         GlobalSymbol PieceCategory{} _ -> return ()

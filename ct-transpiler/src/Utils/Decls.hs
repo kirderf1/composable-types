@@ -55,10 +55,10 @@ mapDecl' f decl = f =<< case decl of
         MinimalPragma    l b             -> return $ MinimalPragma l b
         RoleAnnotDecl    l t rs          -> return $ RoleAnnotDecl l t rs
         CompletePragma   l cs ty         -> return $ CompletePragma l cs ty
-        PieceDecl   l ca dh cds          -> PieceDecl l ca dh <$> (mapDecl f `mapM` cds)
+        PieceDecl   l ca mcx dh cds      -> PieceDecl l ca <$> (mapDecl f `mapM` mcx) <*> mapDecl f dh <*> (mapDecl f `mapM` cds)
         PieceCatDecl l ca                -> return $ PieceCatDecl l ca
         CompFunDecl  l ns mcx ca t       -> CompFunDecl l ns <$> (mapDecl f `mapM` mcx) <*> return ca <*> mapDecl f t
-        CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapDecl f `mapM` mcx) <*> return fn <*> mapDecl f `mapM` ts <*> return pn <*> ((mapDecl f `mapM`) `mapM` ids)
+        CompFunExt   l mcx fn ts pn ids  -> CompFunExt l <$> (mapDecl f `mapM` mcx) <*> return fn <*> mapDecl f `mapM` ts <*> mapDecl f pn <*> ((mapDecl f `mapM`) `mapM` ids)
 
 
 mapDecls :: (MonadError String m) => (Decl l -> m [Decl l]) -> [Decl l] -> m [Decl l]
@@ -181,7 +181,13 @@ instance DeclMap Type where
           TyBang l b u t                  -> TyBang l b u <$> mapDecl f t
           TyWildCard l n                -> return $ TyWildCard l n
           TyQuasiQuote l n s            -> return $ TyQuasiQuote l n s
-          TyComp l c t                  -> return $ TyComp l c t
+          TyComp l c t                  -> TyComp l c <$> mapDecl f `mapM` t
+
+instance DeclMap Constraint where
+    mapDecl f c = case c of
+        FunConstraint l qn t          -> return $ FunConstraint l qn t
+        PieceConstraint l qn t        -> PieceConstraint l <$> mapDecl f qn <*> return t
+        CategoryConstraint l qn t     -> return $ CategoryConstraint l qn t
 
 
 instance DeclMap Promoted where
