@@ -8,4 +8,5 @@ module HidingPieceConstr where
 import qualified Data.Comp
 import qualified Data.Comp.Derive
 import qualified ComposableTypes
+import Init hiding (Piece(Cons),composable_types_constructor_Cons)
 cons = Cons 0
