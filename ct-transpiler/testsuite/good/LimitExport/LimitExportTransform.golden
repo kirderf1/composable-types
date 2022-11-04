@@ -4,7 +4,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
-module LimitExport (Piece(Cons), composable_types_constructor_Cons) where
+module LimitExport (Piece(Cons), composable_types_constructor_Cons)
+       where
 import qualified Data.Comp
 import qualified Data.Comp.Derive
 import qualified ComposableTypes
@@ -15,4 +16,6 @@ composable_types_constructor_Cons ::
                                     ComposableTypes.PartOf Piece g => Int -> g
 composable_types_constructor_Cons arg_1
   = ComposableTypes.inject' (Cons arg_1)
+
+cons :: ComposableTypes.PartOf Piece e => e
 cons = composable_types_constructor_Cons 0

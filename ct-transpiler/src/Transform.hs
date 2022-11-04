@@ -9,9 +9,11 @@ import Language.Haskell.Names
 import qualified GeneratedNames as Names
 import FunctionTransform
 import PieceTransform
+import ExportsTransform
 import TransformUtils
 import Utils.Types
 import Utils.Decls
+import Utils.Exports
 import Utils.Exps
 import Utils.Contexts
 
@@ -44,6 +46,7 @@ transformModule m@(Module l mhead pragmas imports decls) =
             void <$> (mapDecl transformFunDecl
                 =<< mapDecl transformPieceDecl
                 =<< mapExp transformExp
+                =<< mapExports transformExport
                 =<< mapContext transformContext
                 =<< mapType transformCompType (Module l mhead pragmas' imports' decls))
         else return $ void m

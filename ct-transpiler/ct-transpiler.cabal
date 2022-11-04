@@ -28,10 +28,12 @@ library
     -- Modules included in this library but not exported.
     other-modules:    FunctionTransform,
                       PieceTransform,
+                      ExportsTransform,
                       TransformUtils,
                       GeneratedNames,
                       Utils.Types,
                       Utils.Decls,
+                      Utils.Exports,
                       Utils.Exps,
                       Utils.Contexts,
                       Utils.Names
