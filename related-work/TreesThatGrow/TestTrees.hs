@@ -2,40 +2,41 @@ module Main where
 
 import ExprTrees
 import EvalTrees
-import RenderTrees
+import AsStringTrees
 import NegationTrees
 import DesugTrees
 
--- | Examples of type Expr, containing constants, addition and multiplication
-addExample :: Expr UD
-addExample = Add_UD (Const_UD 3) (Const_UD 5)
+-- | Examples of type Expr, containing constants, addition and 
+-- multiplication
+threePlusFive :: Expr UD
+threePlusFive = Add (Const 3) (Const 5)
 
-addMulExample :: Expr UD
-addMulExample = Mul_UD (Const_UD 2) addExample
+twoMulThreePlusFive :: Expr UD
+twoMulThreePlusFive = Mul (Const 2) threePlusFive
 
 -- | Example with negation
-negAddExample :: Expr WithNeg
-negAddExample = Const_WithNeg 3 `Add_WithNeg` (Neg_WithNeg (Const_WithNeg 5))
+threePlusNegFive :: Expr WithNeg
+threePlusNegFive = Const 3 `Add` 
+                        (Neg_WithNeg (Const 5))
 
 -- | Evaluation examples
-evalAddMul = evalUD addMulExample
+evalAddMul = evalUD twoMulThreePlusFive
 
-evalNegAdd = evalWithNeg negAddExample
+evalAddNeg = evalWithNeg threePlusNegFive
 
--- | Render example
-renderNegAdd = renderWithNeg negAddExample
+-- | AsString example
+asStringAddNeg = asStringWithNeg threePlusNegFive
 
 -- | Desugar example
-desugNegAdd = renderUD (desugWithNeg negAddExample)
+desugAddNeg = asStringUD (desugWithNeg threePlusNegFive)
 
 -- | Main, printing results of above examples
 main :: IO ()
 main = do
     putStrLn "Evaluation examples:"
     print evalAddMul
-    print evalNegAdd
-    putStrLn "Render example:"
-    putStrLn renderNegAdd
+    print evalAddNeg
+    putStrLn "AsString example:"
+    putStrLn asStringAddNeg
     putStrLn "Desugar example:"
-    putStrLn desugNegAdd
-
+    putStrLn desugAddNeg
