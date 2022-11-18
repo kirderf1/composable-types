@@ -17,13 +17,13 @@ desug f (ExprExt e) = f e
 desugUD :: Expr UD -> Expr UD
 desugUD = desug absurd
 
--- | Desugaring of Sug
-desugSug :: (X_ExprExt e ~ Sug e) 
-    => (X_SugExt e -> Expr UD) -> Sug e -> Expr UD
-desugSug f (Neg e) = Mul (Const (-1)) (desug (desugSug f) e)
-desugSug f (SugExt e) = f e
+-- | Desugaring of Neg
+desugNeg :: (X_ExprExt e ~ Neg e) 
+    => (X_NegExt e -> Expr UD) -> Neg e -> Expr UD
+desugNeg f (Neg e) = Mul (Const (-1)) (desug (desugNeg f) e)
+desugNeg f (NegExt e) = f e
 
 -- | Desugaring of the composition of Expr where it is extended 
--- with Sug, where Sug has no extensions
+-- with Neg, where Neg has no extensions
 desugWithNeg :: Expr WithNeg -> Expr UD
-desugWithNeg e = desug (desugSug absurd) e
+desugWithNeg e = desug (desugNeg absurd) e
