@@ -7,7 +7,7 @@ import EvalTrees
 import AsStringTrees
 import Data.Void
 
--- | Negar
+-- | Negation
 
 -- | Type instance for the original Expr type, now containing 
 -- Neg as as its extension variant
