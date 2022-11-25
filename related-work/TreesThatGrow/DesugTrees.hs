@@ -18,7 +18,7 @@ desugUD :: Expr UD -> Expr UD
 desugUD = desug absurd
 
 -- | Desugaring of Neg
-desugNeg :: (X_ExprExt e1 ~ Neg e1) 
-    => (X_NegExt e1 -> Expr e2) -> Neg e1 -> Expr e2
-desugNeg f (Neg e) = Mul (Const (-1)) (desug (desugNeg f) e)
-desugNeg f (NegExt e) = f e
+desugNeg :: (Expr e1 -> Expr e2)
+    -> (X_NegExt e1 -> Expr e2) -> Neg e1 -> Expr e2
+desugNeg g _ (Neg e) = Mul (Const (-1)) (g e)
+desugNeg _ f (NegExt e) = f e

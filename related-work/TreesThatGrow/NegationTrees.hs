@@ -19,13 +19,11 @@ pattern NegP e <- ExprExt (Neg e)
     where NegP e = ExprExt (Neg e)
           
 -- | Evaluation of Neg          
-evalNeg :: (X_ExprExt e ~ Neg e) 
-    => (X_NegExt e -> Int) -> Neg e -> Int
-evalNeg f (Neg e) = (-1) * eval (evalNeg f) e
-evalNeg f (NegExt e) = f e
+evalNeg :: (Expr e -> Int) -> (X_NegExt e -> Int) -> Neg e -> Int
+evalNeg g _ (Neg e) = (-1) * g e
+evalNeg _ f (NegExt e) = f e
 
 -- | asString of Neg
-asStringNeg :: (X_ExprExt e ~ Neg e) 
-    => (X_NegExt e -> String) -> Neg e -> String
-asStringNeg f (Neg e) = "(-" ++ asString (asStringNeg f) e ++ ")"
-asStringNeg f (NegExt e) = f e
+asStringNeg :: (Expr e -> String) -> (X_NegExt e -> String) -> Neg e -> String
+asStringNeg g _ (Neg e) = "(-" ++ g e ++ ")"
+asStringNeg _ f (NegExt e) = f e

@@ -31,17 +31,17 @@ type instance X_NegExt WithNeg = Void
 -- | Evaluation of the composition of Expr where it is extended with Neg,
 -- where Neg has no extensions
 evalWithNeg :: Expr WithNeg -> Int
-evalWithNeg e = eval (evalNeg absurd) e
+evalWithNeg e = eval (evalNeg evalWithNeg absurd) e
 
 -- | asString of the composition of Expr where it is extended with Neg,
 -- where Neg has no extensions
 asStringWithNeg :: Expr WithNeg -> String
-asStringWithNeg e = asString (asStringNeg absurd) e
+asStringWithNeg e = asString (asStringNeg asStringWithNeg absurd) e
 
 -- | Desugaring of the composition of Expr where it is extended 
 -- with Neg, where Neg has no extensions
 desugWithNeg :: Expr WithNeg -> Expr UD
-desugWithNeg e = desug (desugNeg absurd) e
+desugWithNeg e = desug (desugNeg desugWithNeg absurd) e
 
 -- | Example with negation
 threePlusNegFive :: Expr WithNeg
