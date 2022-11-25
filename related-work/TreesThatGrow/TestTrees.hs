@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeFamilies #-}
+
 module Main where
 
 import ExprTrees
@@ -5,6 +7,7 @@ import EvalTrees
 import AsStringTrees
 import NegationTrees
 import DesugTrees
+import Data.Void
 
 -- | Examples of type Expr, containing constants, addition and 
 -- multiplication
@@ -13,6 +16,32 @@ threePlusFive = Add (Const 3) (Const 5)
 
 twoMulThreePlusFive :: Expr UD
 twoMulThreePlusFive = Mul (Const 2) threePlusFive
+
+-- | Composition of Expr and Neg
+
+data WithNeg
+
+-- | Type instance for the original Expr type, now containing 
+-- Neg as as its extension variant
+type instance X_ExprExt WithNeg = Neg WithNeg
+
+-- | Type instance for the composition of Neg that is not extended
+type instance X_NegExt WithNeg = Void
+
+-- | Evaluation of the composition of Expr where it is extended with Neg,
+-- where Neg has no extensions
+evalWithNeg :: Expr WithNeg -> Int
+evalWithNeg e = eval (evalNeg absurd) e
+
+-- | asString of the composition of Expr where it is extended with Neg,
+-- where Neg has no extensions
+asStringWithNeg :: Expr WithNeg -> String
+asStringWithNeg e = asString (asStringNeg absurd) e
+
+-- | Desugaring of the composition of Expr where it is extended 
+-- with Neg, where Neg has no extensions
+desugWithNeg :: Expr WithNeg -> Expr UD
+desugWithNeg e = desug (desugNeg absurd) e
 
 -- | Example with negation
 threePlusNegFive :: Expr WithNeg

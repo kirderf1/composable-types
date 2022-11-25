@@ -22,8 +22,3 @@ desugNeg :: (X_ExprExt e1 ~ Neg e1)
     => (X_NegExt e1 -> Expr e2) -> Neg e1 -> Expr e2
 desugNeg f (Neg e) = Mul (Const (-1)) (desug (desugNeg f) e)
 desugNeg f (NegExt e) = f e
-
--- | Desugaring of the composition of Expr where it is extended 
--- with Neg, where Neg has no extensions
-desugWithNeg :: Expr WithNeg -> Expr UD
-desugWithNeg e = desug (desugNeg absurd) e
