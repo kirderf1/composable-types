@@ -26,9 +26,9 @@ type family X_NegExt e
 type instance X_NegExt WithNeg = Void
 
  -- | Useful pattern synonym
-pattern Neg_WithNeg :: Expr WithNeg -> Expr WithNeg
-pattern Neg_WithNeg e <- ExprExt (Neg e)
-    where Neg_WithNeg e = ExprExt (Neg e)
+pattern NegP :: (X_ExprExt e ~ Neg e) => Expr e -> Expr e
+pattern NegP e <- ExprExt (Neg e)
+    where NegP e = ExprExt (Neg e)
           
 -- | Evaluation of Neg          
 evalNeg :: (X_ExprExt e ~ Neg e) 

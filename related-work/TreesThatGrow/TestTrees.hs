@@ -17,7 +17,7 @@ twoMulThreePlusFive = Mul (Const 2) threePlusFive
 -- | Example with negation
 threePlusNegFive :: Expr WithNeg
 threePlusNegFive = Const 3 `Add` 
-                        (Neg_WithNeg (Const 5))
+                        (NegP (Const 5))
 
 -- | Evaluation examples
 evalAddMul = evalUD twoMulThreePlusFive
