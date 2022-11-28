@@ -58,7 +58,7 @@ $(
     [''Composable_types_inner_class_transform]
   )
 
-class Composable_types_outer_class_transform t a where
+class () => Composable_types_outer_class_transform t a where
         transform :: t -> a
 
 instance Composable_types_inner_class_transform g a =>

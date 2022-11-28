@@ -19,7 +19,7 @@ $(
     [''Composable_types_inner_class_d]
   )
 
-class Composable_types_outer_class_d t e where
+class () => Composable_types_outer_class_d t e where
         d :: t -> e
 
 instance Composable_types_inner_class_d g e =>
