@@ -185,7 +185,7 @@ instance DeclMap Type where
 
 instance DeclMap Constraint where
     mapDecl f c = case c of
-        FunConstraint l qn t          -> return $ FunConstraint l qn t
+        FunConstraint l qn ts t       -> FunConstraint l qn <$> mapDecl f `mapM` ts <*> return t
         PieceConstraint l qn t        -> PieceConstraint l <$> mapDecl f qn <*> return t
         CategoryConstraint l qn t     -> return $ CategoryConstraint l qn t
 

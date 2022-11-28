@@ -1,0 +1,36 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+module TyVarFunCons where
+import qualified Data.Comp
+import qualified Data.Comp.Derive
+import qualified ComposableTypes
+
+data B composable_types_recursive_var = C
+
+composable_types_constructor_C :: ComposableTypes.PartOf B g => g
+composable_types_constructor_C = ComposableTypes.inject' C
+
+class Composable_types_inner_class_d f e where
+        composable_types_class_function_d ::
+                                            (Composable_types_inner_class_d g e) =>
+                                            f (Data.Comp.Term g) -> e
+
+$(
+  Data.Comp.Derive.derive [Data.Comp.Derive.liftSum]
+    [''Composable_types_inner_class_d]
+  )
+
+class Composable_types_outer_class_d t e where
+        d :: t -> e
+
+instance Composable_types_inner_class_d g e =>
+         Composable_types_outer_class_d (Data.Comp.Term g) e
+         where
+        d = composable_types_class_function_d . Data.Comp.unTerm
+
+test :: Composable_types_outer_class_d a Int => a -> Int
+test a = d a + 1

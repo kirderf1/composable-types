@@ -173,7 +173,7 @@ instance ContextMap Type where
 
 instance ContextMap Constraint where
     mapContext f c = case c of
-        FunConstraint l qn t          -> return $ FunConstraint l qn t
+        FunConstraint l qn ts t       -> FunConstraint l qn <$> mapContext f `mapM` ts <*> return t
         PieceConstraint l qn t        -> PieceConstraint l <$> mapContext f qn <*> return t
         CategoryConstraint l qn t     -> return $ CategoryConstraint l qn t
 

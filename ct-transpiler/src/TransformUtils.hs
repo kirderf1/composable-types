@@ -68,9 +68,10 @@ contextFromList as = CxTuple def as
 
 -- | Transform constraint to assertion
 constraintToAsst :: Default l => Constraint l -> Transform (Maybe (Asst l))
-constraintToAsst (FunConstraint _ fun v) = do
+constraintToAsst (FunConstraint _ fun types v) = do
     cname <- Names.qOuterClass fun
-    return $ (Just (TypeA def (TyApp def (TyCon def cname) (TyVar def v)))) 
+    let asstType = foldl (TyApp def) (TyCon def cname) (TyVar def v : types)
+    return $ (Just (TypeA def asstType))
 constraintToAsst (PieceConstraint _ pieceref v) = return $ (Just (TypeA def (TyApp def 
     (TyApp def (TyCon def partOfName) (pieceRefAsType pieceref)) (TyVar def v))))
 constraintToAsst (CategoryConstraint _ _category _v) = return (Nothing)
