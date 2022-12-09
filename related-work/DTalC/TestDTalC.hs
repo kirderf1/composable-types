@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeOperators, FlexibleContexts #-}
 
 module Main where
 
@@ -11,7 +11,7 @@ import DesugDTalC
 
 -- | Examples of type Expr, containing constants, addition and 
 -- multiplication
-threePlusFive :: Expr
+threePlusFive :: (Const :<: f, Op :<: f) => Term f
 threePlusFive = iAdd (iConst 3) (iConst 5)
 
 twoMulThreePlusFive :: Expr
@@ -45,4 +45,3 @@ main = do
     putStrLn asStringAddNeg
     putStrLn "Desugar example:"
     putStrLn desugAddNeg
-    
