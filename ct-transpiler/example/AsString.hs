@@ -13,5 +13,7 @@ ext asString for Const where
     
 -- | AsString extension for operations
 ext asString for Op where
-    asString (Add e1 e2) = "(" ++ asString e1 ++ " + " ++  asString e2 ++ ")"
-    asString (Mul e1 e2) = "(" ++ asString e1 ++ " * " ++  asString e2 ++ ")"
+    asString (Add e1 e2) = "(" ++ asString e1 ++ " + " 
+                               ++ asString e2 ++ ")"
+    asString (Mul e1 e2) = "(" ++ asString e1 ++ " * " 
+                               ++ asString e2 ++ ")"

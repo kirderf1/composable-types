@@ -8,18 +8,19 @@ import AsString
 import Negation
 import Desug
 
--- | Examples of type Expr, containing constants, addition and multiplication
-threePlusFive :: Expr
+-- | Examples of type ExprComp, containing constants, addition and 
+-- multiplication
+threePlusFive :: ExprComp
 threePlusFive = Add (Const 3) (Const 5)
 
-twoMulThreePlusFive :: Expr
+twoMulThreePlusFive :: ExprComp
 twoMulThreePlusFive = Mul (Const 2) threePlusFive
                       
--- | Composed type ExprWithNeg, also containing negation
-type ExprWithNeg = ExprCat ==> (Const | Op | Neg)
+-- | Composed type ExprCompWithNeg, also containing negation
+type ExprCompWithNeg = ExprCat ==> (Const | Op | Neg)
 
 -- | Example with negation
-threePlusNegFive :: ExprWithNeg
+threePlusNegFive :: ExprCompWithNeg
 threePlusNegFive = Const 3 `Add` (Neg (Const 5))
 
 -- | Evaluation examples
@@ -31,7 +32,7 @@ evalAddNeg = eval threePlusNegFive
 asStringAddNeg = asString threePlusNegFive
 
 -- | Desugar example
-desugAddNeg = asString (desug threePlusNegFive :: Expr)
+desugAddNeg = asString (desug threePlusNegFive :: ExprComp)
 
 -- | Main, printing results of above examples
 main :: IO ()
