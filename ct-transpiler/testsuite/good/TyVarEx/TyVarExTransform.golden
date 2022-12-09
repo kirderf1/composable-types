@@ -26,7 +26,7 @@ $(
     [''Composable_types_inner_class_evalNum]
   )
 
-class Composable_types_outer_class_evalNum t e where
+class Num e => Composable_types_outer_class_evalNum t e where
         evalNum :: t -> e
 
 instance Composable_types_inner_class_evalNum g e =>

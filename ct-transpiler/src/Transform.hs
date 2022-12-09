@@ -10,6 +10,7 @@ import qualified GeneratedNames as Names
 import FunctionTransform
 import PieceTransform
 import ExportsTransform
+import ConstraintsTransform
 import TransformUtils
 import Utils.Types
 import Utils.Decls
@@ -19,6 +20,7 @@ import Utils.Contexts
 
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import Data.Default
 
 import Control.Monad.Reader
 import Control.Monad.Except

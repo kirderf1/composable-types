@@ -29,6 +29,7 @@ library
     other-modules:    FunctionTransform,
                       PieceTransform,
                       ExportsTransform,
+                      ConstraintsTransform,
                       TransformUtils,
                       GeneratedNames,
                       Utils.Types,

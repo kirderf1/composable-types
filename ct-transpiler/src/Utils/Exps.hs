@@ -171,7 +171,7 @@ instance ExpMap Type where
 
 instance ExpMap Constraint where
     mapExp f c = case c of
-        FunConstraint l qn t          -> return $ FunConstraint l qn t
+        FunConstraint l qn ts t       -> FunConstraint l qn <$> mapExp f `mapM` ts <*> return t
         PieceConstraint l qn t        -> PieceConstraint l <$> mapExp f qn <*> return t
         CategoryConstraint l qn t     -> return $ CategoryConstraint l qn t
 

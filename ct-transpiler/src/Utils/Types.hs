@@ -173,7 +173,7 @@ instance TypeMap Type where
 
 instance TypeMap Constraint where
     mapType f c = case c of
-        FunConstraint l qn t          -> return $ FunConstraint l qn t
+        FunConstraint l qn ts t       -> FunConstraint l qn <$> mapType f `mapM` ts <*> return t
         PieceConstraint l qn t        -> PieceConstraint l <$> mapType f qn <*> return t
         CategoryConstraint l qn t     -> return $ CategoryConstraint l qn t
 

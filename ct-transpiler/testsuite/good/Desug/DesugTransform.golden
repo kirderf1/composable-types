@@ -53,7 +53,7 @@ $(
     [''Composable_types_inner_class_desug]
   )
 
-class Composable_types_outer_class_desug t a where
+class () => Composable_types_outer_class_desug t a where
         desug :: t -> a
 
 instance Composable_types_inner_class_desug g a =>

@@ -31,7 +31,7 @@ transformFunDecl (CompFunDecl _ names mcx category t) = do
         return
           [ classDecl
           , liftSum className
-          , outerClass outerClassName nam t tyvarNames
+          , outerClass mcx outerClassName nam t tyvarNames
           , outerInstance className outerClassName funcName nam tyvarNames
           ]
 transformFunDecl (CompFunExt _ mcx funName types pieceRef Nothing) = do
@@ -118,8 +118,8 @@ transformMatch (InfixMatch l pat funName patterns rhs maybeBinds) = do
     funName' <- Names.classFunction funName
     return (InfixMatch l pat funName' patterns rhs maybeBinds)
 
-outerClass :: Name (Scoped ()) -> Name (Scoped ()) -> Type (Scoped ()) -> [Name (Scoped ())] -> Decl (Scoped ())
-outerClass className funName ty classVars = ClassDecl def Nothing declHead [] (Just [classDecl])
+outerClass :: Maybe (Context (Scoped ())) -> Name (Scoped ()) -> Name (Scoped ()) -> Type (Scoped ()) -> [Name (Scoped ())] -> Decl (Scoped ())
+outerClass mcx className funName ty classVars = ClassDecl def mcx declHead [] (Just [classDecl])
   where
     termvar = Ident def "t"
     declHead = foldl (DHApp def) (DHead def className) (map (UnkindedVar def) (termvar : classVars))
