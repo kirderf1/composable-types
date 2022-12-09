@@ -4,7 +4,7 @@ module NegationDTalC where
 
 import DTalC
 import EvalDTalC
-import RenderDTalC
+import AsStringDTalC
 
 -- | Data type for negation
 data Neg a = Neg a
@@ -19,8 +19,8 @@ iNeg e = inject (Neg e)
 
 -- | Eval instance for negation
 instance Eval Neg where
-    evalAlgebra (Neg e) = (-1) * e
+    evalAlg (Neg e) = (-1) * e
     
--- | Render instance for negation
-instance Render Neg where
-    render' (Neg e) = "(-" ++ render e ++ ")"
+-- | AsString instance for negation
+instance AsString Neg where
+    asString' (Neg e) = "(-" ++ asString e ++ ")"

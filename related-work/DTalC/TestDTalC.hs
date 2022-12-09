@@ -5,42 +5,44 @@ module Main where
 import DTalC
 import ExprDTalC
 import EvalDTalC
-import RenderDTalC
+import AsStringDTalC
 import NegationDTalC
 import DesugDTalC
 
--- | Examples of type Expr, containing constants, addition and multiplication
-addExample :: Expr
-addExample = iAdd (iConst 3) (iConst 5)
+-- | Examples of type Expr, containing constants, addition and 
+-- multiplication
+threePlusFive :: Expr
+threePlusFive = iAdd (iConst 3) (iConst 5)
 
-addMulExample :: Expr
-addMulExample = iMul (iConst 2) addExample
+twoMulThreePlusFive :: Expr
+twoMulThreePlusFive = iMul (iConst 2) threePlusFive
                       
--- | Composed type Expr', also containing negation
-type Expr' = Term (Const :+: Op :+: Neg)
+-- | Composed type ExprWithNeg, also containing negation
+type ExprWithNeg = Term (Const :+: Op :+: Neg)
 
 -- | Example with negation
-negAddExample :: Expr'
-negAddExample = iConst 3 `iAdd` (iNeg (iConst 5))
+threePlusNegFive :: ExprWithNeg
+threePlusNegFive = iConst 3 `iAdd` (iNeg (iConst 5))
 
 -- | Evaluation examples
-evalAddMul = eval addMulExample
+evalAddMul = eval twoMulThreePlusFive
 
-evalNegAdd = eval negAddExample
+evalAddNeg = eval threePlusNegFive
 
--- | Render example
-renderNegAdd = render negAddExample
+-- | AsString example
+asStringAddNeg = asString threePlusNegFive
 
 -- | Desugar example
-desugNegAdd = render (desug negAddExample :: Expr)
+desugAddNeg = asString (desug threePlusNegFive :: Expr)
 
 -- | Main, printing results of above examples
 main :: IO ()
 main = do
     putStrLn "Evaluation examples:"
     print evalAddMul
-    print evalNegAdd
-    putStrLn "Render example:"
-    putStrLn renderNegAdd
+    print evalAddNeg
+    putStrLn "AsString example:"
+    putStrLn asStringAddNeg
     putStrLn "Desugar example:"
-    putStrLn desugNegAdd
+    putStrLn desugAddNeg
+    

@@ -7,22 +7,22 @@ import ExprDTalC
 
 -- | Eval function using an algebra
 class Functor f => Eval f where
-    evalAlgebra :: f Int -> Int
+    evalAlg :: f Int -> Int
 
--- | Fold using evalAlgebra
+-- | Fold using evalAlg
 eval :: Eval f => Term f -> Int
-eval = foldTerm evalAlgebra
+eval = foldTerm evalAlg
 
 -- | Eval instance for constants
 instance Eval Const where
-    evalAlgebra (Const i) = i
+    evalAlg (Const i) = i
 
 -- | Eval instance for operations
 instance Eval Op where
-    evalAlgebra (Add e1 e2) = e1 + e2
-    evalAlgebra (Mul e1 e2) = e1 * e2
+    evalAlg (Add e1 e2) = e1 + e2
+    evalAlg (Mul e1 e2) = e1 * e2
 
 -- | Eval instance for coproduct
 instance (Eval f, Eval g) => Eval (f :+: g) where
-    evalAlgebra (Inl a) = evalAlgebra a
-    evalAlgebra (Inr b) = evalAlgebra b
+    evalAlg (Inl a) = evalAlg a
+    evalAlg (Inr b) = evalAlg b

@@ -1,4 +1,4 @@
-{-#LANGUAGE TypeOperators, UndecidableInstances, FlexibleInstances,
+{-# LANGUAGE TypeOperators, UndecidableInstances, FlexibleInstances,
     MultiParamTypeClasses #-}
 
 module DesugDTalC where
@@ -9,20 +9,22 @@ import NegationDTalC
 
 -- | Transformative function desug using algebra
 class (Functor f, Functor g) => Desug f g where
-    desugAlgebra :: f (Term g) -> (Term g)
+    desugAlg :: f (Term g) -> (Term g)
 
--- | Fold using desugAlgebra
+-- | Fold using desugAlg
 desug :: (Desug f g, Functor f) => Term f -> Term g
-desug = foldTerm desugAlgebra
+desug = foldTerm desugAlg
 
 -- | Default instance of Desug
-instance {-# OVERLAPPABLE #-} (Functor f, Functor g, f :<: g) => Desug f g where
-    desugAlgebra = inject
+instance {-# OVERLAPPABLE #-} 
+        (Functor f, Functor g, f :<: g) 
+        => Desug f g where
+    desugAlg = inject
 
 -- | Desug instance for negation
 instance (Functor g, Const :<: g, Op :<: g) => Desug Neg g where
-    desugAlgebra (Neg e) = iConst (-1) `iMul` e
+    desugAlg (Neg e) = iConst (-1) `iMul` e
 
 instance (Desug f h, Desug g h) => Desug (f :+: g) h where
-    desugAlgebra (Inl a) = desugAlgebra a
-    desugAlgebra (Inr b) = desugAlgebra b
+    desugAlg (Inl a) = desugAlg a
+    desugAlg (Inr b) = desugAlg b
