@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeOperators, FlexibleContexts #-}
 
 module Main where
 
@@ -12,7 +12,7 @@ import Data.Comp hiding (Const)
 
 -- | Examples of type Expr, containing constants, addition and 
 -- multiplication
-threePlusFive :: Expr
+threePlusFive :: (Const :<: f, Op :<: f) => Term f
 threePlusFive = iAdd (iConst 3) (iConst 5)
 
 twoMulThreePlusFive :: Expr
