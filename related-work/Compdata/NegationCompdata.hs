@@ -1,10 +1,9 @@
-{-# LANGUAGE TemplateHaskell, FlexibleContexts #-}
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TemplateHaskell, FlexibleContexts, DeriveFunctor #-}
 
 module NegationCompdata where
 
 import EvalCompdata 
-import RenderCompdata
+import AsStringCompdata
 
 import Data.Comp 
 import Data.Comp.Derive
@@ -21,6 +20,6 @@ $(derive [makeEqF, makeShowF, smartConstructors]
 instance Eval Neg where
     evalAlg (Neg e) = (-1) * e
     
--- | Render instance for negation
-instance Render Neg where
-    render' (Neg e) = "(-" ++ render e ++ ")"
+-- | AsString instance for negation
+instance AsString Neg where
+    asString' (Neg e) = "(-" ++ asString e ++ ")"

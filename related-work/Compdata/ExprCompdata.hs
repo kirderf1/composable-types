@@ -1,5 +1,5 @@
-{-# LANGUAGE TemplateHaskell, TypeOperators, FlexibleContexts #-}
-{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TemplateHaskell, TypeOperators, FlexibleContexts,
+    DeriveFunctor #-}
 
 module ExprCompdata where
 

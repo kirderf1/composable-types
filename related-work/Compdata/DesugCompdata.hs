@@ -22,7 +22,8 @@ instance {-# OVERLAPPABLE #-} (f :<: g) => Desug f g where
     desugAlg = inject 
 
 -- | Desug instance for negation 
-instance {-# OVERLAPPABLE #-} (Const :<: g, Op :<: g) => Desug Neg g where
+instance {-# OVERLAPPABLE #-} (Const :<: g, Op :<: g) 
+        => Desug Neg g where
     desugAlg (Neg e) = iConst (-1) `iMul` e
 
 -- | Derive Desug instance for coproduct using Template Haskell 
