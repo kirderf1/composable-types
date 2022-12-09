@@ -10,7 +10,7 @@ import Desug
 
 -- | Examples of type ExprComp, containing constants, addition and 
 -- multiplication
-threePlusFive :: ExprComp
+threePlusFive :: (Const partof e, Op partof e) => e
 threePlusFive = Add (Const 3) (Const 5)
 
 twoMulThreePlusFive :: ExprComp
