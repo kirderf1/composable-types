@@ -4,7 +4,7 @@ module NegationVariations where
 
 import VariationsOnVariants
 import EvalVariations
-import RenderVariations
+import AsStringVariations
 
 -- | Data type for negation
 data Neg e = Neg e
@@ -21,6 +21,6 @@ iNeg x = inject (Neg x)
 evalNeg :: Neg e -> (e -> Int) -> Int
 evalNeg (Neg e) r = (-1) * r e
 
--- | Rendering of negation
-renderNeg :: Neg e -> (e -> String) -> String
-renderNeg (Neg e) r = "(-" ++ r e ++ ")"
+-- | asString of negation
+asStringNeg :: Neg e -> (e -> String) -> String
+asStringNeg (Neg e) r = "(-" ++ r e ++ ")"
