@@ -11,7 +11,7 @@ import Data.Void
 
 -- | Examples of type Expr, containing constants, addition and 
 -- multiplication
-threePlusFive :: Expr UD
+threePlusFive :: Expr e
 threePlusFive = Add (Const 3) (Const 5)
 
 twoMulThreePlusFive :: Expr UD
