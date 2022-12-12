@@ -22,7 +22,7 @@ twoMulThreePlusFive = Mul (Const 2) threePlusFive
 data WithNeg
 
 -- | Type instance for the original Expr type, now containing 
--- Neg as as its extension variant
+-- Neg as its extension variant
 type instance X_ExprExt WithNeg = Neg WithNeg
 
 -- | Type instance for the composition of Neg that is not extended
