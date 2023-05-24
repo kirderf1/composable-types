@@ -5,4 +5,4 @@ The node variants of the AST can be split into pieces, which can then be compose
 
 Currently does not work with GHC 9+ due to the dependency on the package compdata (which is used by our testsuite).
 
-This transpiler was written as part of a thesis, which is not yet finished.
+This transpiler was written as part of a thesis, found in the "related-documents" folder.
